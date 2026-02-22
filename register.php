@@ -422,5 +422,6 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
         });
     })();
     </script>
+    <script src="<?= BASE_URL ?>/assets/js/script.js"></script>
 </body>
 </html>

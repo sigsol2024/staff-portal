@@ -398,6 +398,41 @@ a:hover {
   border-color: var(--danger);
 }
 
+/* Password show/hide toggle */
+.password-wrap {
+  position: relative;
+  display: block;
+}
+
+.password-wrap .form-control {
+  padding-right: 2.75rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: color var(--transition), background var(--transition);
+}
+
+.password-toggle:hover {
+  color: var(--accent);
+  background: rgba(10, 31, 68, 0.06);
+}
+
+.password-toggle:focus {
+  outline: none;
+}
+
 .form-hint {
   font-size: 0.8rem;
   color: var(--gray-dark);
