@@ -2,6 +2,7 @@
 define('STAFF_PORTAL', true);
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/mail.php';
 
 if (!empty($_SESSION['staff_id'])) {
     header('Location: ' . BASE_URL . '/user/dashboard.php');
@@ -81,13 +82,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     basic_salary, housing_allowance, transport_allowance, other_allowances, gross_monthly_salary, overtime_rate, bonus_commission_structure,
                     bank_name, account_name, account_number, bvn,
                     tax_identification_number, pension_fund_administrator, pension_pin, nhf_number, nhis_hmo_provider, employee_contribution_percentages,
-                    new_hire, exit_termination_date, salary_adjustment_notes, promotion_role_change, bank_detail_update, declaration_accepted)
+                    new_hire, exit_termination_date, salary_adjustment_notes, promotion_role_change, bank_detail_update, declaration_accepted, email_verified)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active',
                     ?, ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?,
                     ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, 1)";
+                    ?, ?, ?, ?, ?, 1, 0)";
                 $stmt = $pdo->prepare($sql);
                 try {
                     $stmt->execute([
@@ -98,7 +99,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $tax_identification_number, $pension_fund_administrator, $pension_pin, $nhf_number, $nhis_hmo_provider, $employee_contribution_percentages,
                         $new_hire, $exit_termination_date, $salary_adjustment_notes, $promotion_role_change, $bank_detail_update
                     ]);
-                    header('Location: ' . BASE_URL . '/login.php?type=staff&registered=1');
+                    $code = (string) random_int(100000, 999999);
+                    $expires = date('Y-m-d H:i:s', time() + (OTP_EXPIRY_MINUTES * 60));
+                    $pdo->prepare("DELETE FROM verification_codes WHERE email = ? AND type = 'registration'")->execute([$email]);
+                    $pdo->prepare("INSERT INTO verification_codes (email, code, type, expires_at) VALUES (?, ?, 'registration', ?)")->execute([$email, $code, $expires]);
+                    $subject = 'Verify your email - Staff Portal';
+                    $body = "Your verification code is: $code\n\nIt expires in " . OTP_EXPIRY_MINUTES . " minutes.\n\nIf you did not register, ignore this email.";
+                    send_mail($email, $subject, $body);
+                    header('Location: ' . BASE_URL . '/verify-email.php?email=' . rawurlencode($email));
                     exit;
                 } catch (PDOException $e) {
                     $error = 'Registration failed. Please try again. Ensure the database schema is up to date (use database/sigsol_sigsolportal.sql).';

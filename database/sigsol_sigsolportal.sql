@@ -130,8 +130,25 @@ CREATE TABLE `staff` (
   `promotion_role_change` text DEFAULT NULL,
   `bank_detail_update` text DEFAULT NULL,
   `declaration_accepted` tinyint(1) DEFAULT NULL,
+  `email_verified` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Table structure for table `verification_codes`
+--
+CREATE TABLE `verification_codes` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `email` varchar(255) NOT NULL,
+  `code` varchar(10) NOT NULL,
+  `type` varchar(20) NOT NULL DEFAULT 'registration',
+  `user_type` varchar(10) DEFAULT NULL,
+  `expires_at` datetime NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `email_type` (`email`,`type`),
+  KEY `expires_at` (`expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -202,6 +219,12 @@ ALTER TABLE `password_reset_tokens`
 --
 ALTER TABLE `staff`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `verification_codes`
+--
+ALTER TABLE `verification_codes`
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

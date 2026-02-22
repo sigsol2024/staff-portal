@@ -31,14 +31,11 @@ This single schema file includes all tables and columns. For a fresh install, im
 
 Edit `config/config.php` and update:
 
-```php
-define('DB_HOST', 'localhost');      // Usually localhost on shared hosting
-define('DB_NAME', 'your_db_name');   // Your database name
-define('DB_USER', 'your_db_user');   // Your database username
-define('DB_PASS', 'your_db_password'); // Your database password
+- **Database**: `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`
+- **BASE_URL**: Your site URL (no trailing slash)
+- **SMTP (for email and OTP)**: Set `MAIL_ENABLED` to `true`, then set `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION` (`tls` or `ssl`), `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`. Without SMTP, forgot-password and login/registration verification emails will not be sent.
 
-define('BASE_URL', 'https://yourdomain.com/staff-portal'); // Your site URL (no trailing slash)
-```
+If you have an existing database, run `database/migrations/001_update_staff_table.sql` in phpMyAdmin to add the new staff columns, `email_verified`, and the `verification_codes` table (required for registration verification and login OTP). If any ALTER fails with "Duplicate column name", that column already exists—comment out that line and run again.
 
 ### 5. Set Permissions
 

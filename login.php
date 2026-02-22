@@ -3,6 +3,7 @@ define('STAFF_PORTAL', true);
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/session.php';
+require_once __DIR__ . '/includes/mail.php';
 
 $type = $_GET['type'] ?? 'staff';
 $isStaff = ($type === 'staff');
@@ -18,6 +19,7 @@ if ($isStaff && !empty($_SESSION['staff_id'])) {
 }
 
 $error = '';
+$verify_email_link = '';
 $success = isset($_GET['registered']) ? 'Registration successful. Please login.' : '';
 $flash = get_flash();
 if ($flash && $flash['type'] === 'success') {
@@ -54,13 +56,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = $failed >= MAX_LOGIN_ATTEMPTS
                         ? 'Account locked for 15 minutes after too many failed attempts.'
                         : 'Invalid email or password.';
+                } elseif (isset($user['email_verified']) && (int) $user['email_verified'] === 0) {
+                    $error = 'Verify your email first. Check your inbox for the 6-digit code.';
+                    $verify_email_link = BASE_URL . '/verify-email.php?email=' . rawurlencode($email);
                 } else {
                     $stmt = $pdo->prepare("UPDATE staff SET failed_attempts = 0, locked_until = NULL WHERE id = ?");
                     $stmt->execute([$user['id']]);
-                    $_SESSION['staff_id'] = $user['id'];
-                    regenerate_session();
-                    header('Location: ' . ($_SESSION['redirect_after_login'] ?? BASE_URL . '/user/dashboard.php'));
-                    unset($_SESSION['redirect_after_login']);
+                    $code = (string) random_int(100000, 999999);
+                    $expires = date('Y-m-d H:i:s', time() + (OTP_EXPIRY_MINUTES * 60));
+                    $pdo->prepare("DELETE FROM verification_codes WHERE email = ? AND type = 'login_otp' AND user_type = 'staff'")->execute([$email]);
+                    $pdo->prepare("INSERT INTO verification_codes (email, code, type, user_type, expires_at) VALUES (?, ?, 'login_otp', 'staff', ?)")->execute([$email, $code, $expires]);
+                    $subject = 'Your login code - Staff Portal';
+                    $body = "Your one-time login code is: $code\n\nIt expires in " . OTP_EXPIRY_MINUTES . " minutes.";
+                    send_mail($email, $subject, $body);
+                    $_SESSION['pending_otp_email'] = $email;
+                    $_SESSION['pending_otp_type'] = 'staff';
+                    $_SESSION['pending_otp_id'] = $user['id'];
+                    header('Location: ' . BASE_URL . '/otp-verify.php');
                     exit;
                 }
             } else {
@@ -72,10 +84,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$admin || !password_verify($password, $admin['password'])) {
                     $error = 'Invalid email or password.';
                 } else {
-                    $_SESSION['admin_id'] = $admin['id'];
-                    regenerate_session();
-                    header('Location: ' . ($_SESSION['redirect_after_login'] ?? BASE_URL . '/admin/dashboard.php'));
-                    unset($_SESSION['redirect_after_login']);
+                    $code = (string) random_int(100000, 999999);
+                    $expires = date('Y-m-d H:i:s', time() + (OTP_EXPIRY_MINUTES * 60));
+                    $pdo->prepare("DELETE FROM verification_codes WHERE email = ? AND type = 'login_otp' AND user_type = 'admin'")->execute([$email]);
+                    $pdo->prepare("INSERT INTO verification_codes (email, code, type, user_type, expires_at) VALUES (?, ?, 'login_otp', 'admin', ?)")->execute([$email, $code, $expires]);
+                    $subject = 'Your login code - Admin Portal';
+                    $body = "Your one-time login code is: $code\n\nIt expires in " . OTP_EXPIRY_MINUTES . " minutes.";
+                    send_mail($email, $subject, $body);
+                    $_SESSION['pending_otp_email'] = $email;
+                    $_SESSION['pending_otp_type'] = 'admin';
+                    $_SESSION['pending_otp_id'] = $admin['id'];
+                    header('Location: ' . BASE_URL . '/otp-verify.php');
                     exit;
                 }
             }
@@ -100,6 +119,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             <?php if ($error): ?>
                 <div class="alert alert-error"><?= esc($error) ?></div>
+                <?php if (!empty($verify_email_link)): ?>
+                    <p><a href="<?= esc($verify_email_link) ?>">Enter your verification code</a></p>
+                <?php endif; ?>
             <?php endif; ?>
             <form method="POST" action="">
                 <?= csrf_field() ?>
@@ -119,8 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <a href="<?= BASE_URL ?>/register.php">Register</a> |
                     <a href="<?= BASE_URL ?>/forgot-password.php">Forgot Password</a>
                 <?php else: ?>
-                    <a href="<?= BASE_URL ?>/login.php?type=staff">Staff Login</a> |
-                    <a href="<?= BASE_URL ?>/admin/register.php">Create Admin Account</a>
+                    <a href="<?= BASE_URL ?>/login.php?type=staff">Staff Login</a>
                 <?php endif; ?>
             </div>
         </div>

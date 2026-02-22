@@ -55,6 +55,17 @@ define('PASSWORD_MIN_LENGTH', 8);
 define('UPLOAD_MAX_SIZE', 2 * 1024 * 1024);  // 2MB
 define('TOKEN_EXPIRY_HOURS', 1);
 
+// SMTP / Mail (PHPMailer)
+define('MAIL_ENABLED', true);  // Set false to disable sending (e.g. dev)
+define('SMTP_HOST', 'smtp.example.com');       // e.g. smtp.gmail.com, mail.yourdomain.com
+define('SMTP_PORT', 587);                        // 587 for TLS, 465 for SSL, 25 for plain
+define('SMTP_ENCRYPTION', 'tls');               // 'tls', 'ssl', or ''
+define('SMTP_USERNAME', '');                     // SMTP auth username (often same as from address)
+define('SMTP_PASSWORD', '');                     // SMTP auth password or app password
+define('MAIL_FROM_ADDRESS', 'noreply@example.com');
+define('MAIL_FROM_NAME', 'Staff Portal');
+define('OTP_EXPIRY_MINUTES', 10);                // 6-digit OTP and verification code validity
+
 // Security headers
 header('X-Frame-Options: SAMEORIGIN');
 header('X-Content-Type-Options: nosniff');

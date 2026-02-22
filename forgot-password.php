@@ -2,6 +2,7 @@
 define('STAFF_PORTAL', true);
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/mail.php';
 
 if (!empty($_SESSION['staff_id'])) {
     header('Location: ' . BASE_URL . '/user/dashboard.php');
@@ -34,15 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$email, $token, $expires]);
 
                 $reset_url = BASE_URL . '/reset-password.php?token=' . $token;
-                $host = parse_url(BASE_URL, PHP_URL_HOST) ?: 'localhost';
                 $subject = 'Password Reset - Staff Portal';
-                $message = "You requested a password reset.\n\nClick here to reset: $reset_url\n\nThis link expires in " . TOKEN_EXPIRY_HOURS . " hour(s).\n\nIf you did not request this, ignore this email.";
-
-                if (@mail($email, $subject, $message, "From: noreply@$host")) {
-                    $success = 'If that email exists, a reset link has been sent.';
-                } else {
-                    $success = 'Reset link (copy if mail not configured): ' . $reset_url;
-                }
+                $body = "You requested a password reset.\n\nClick here to reset: $reset_url\n\nThis link expires in " . TOKEN_EXPIRY_HOURS . " hour(s).\n\nIf you did not request this, ignore this email.";
+                $sent = send_mail($email, $subject, $body);
+                $success = $sent ? 'If that email exists, a reset link has been sent. Check your inbox.' : 'Email could not be sent. Check SMTP settings in config. Reset link: ' . $reset_url;
             } else {
                 $success = 'If that email exists, a reset link has been sent.';
             }
