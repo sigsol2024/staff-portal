@@ -184,16 +184,19 @@ a:hover {
 }
 
 .stat-card .stat-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   background: var(--accent);
   color: var(--primary);
   border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
   margin-bottom: 0.75rem;
+}
+
+.stat-card .stat-icon svg {
+  flex-shrink: 0;
 }
 
 .stat-card .stat-value {
