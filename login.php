@@ -8,16 +8,21 @@ $type = $_GET['type'] ?? 'staff';
 $isStaff = ($type === 'staff');
 
 // Redirect if already logged in
+if (!empty($_SESSION['admin_id'])) {
+    header('Location: ' . BASE_URL . '/admin/dashboard.php');
+    exit;
+}
 if ($isStaff && !empty($_SESSION['staff_id'])) {
     header('Location: ' . BASE_URL . '/user/dashboard.php');
     exit;
 }
-if (!$isStaff && !empty($_SESSION['admin_id'])) {
-    header('Location: ' . BASE_URL . '/admin/dashboard.php');
-    exit;
-}
 
 $error = '';
+$success = isset($_GET['registered']) ? 'Registration successful. Please login.' : '';
+$flash = get_flash();
+if ($flash && $flash['type'] === 'success') {
+    $success = $flash['message'];
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validate_csrf($_POST['csrf_token'] ?? '')) {
@@ -90,6 +95,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="auth-wrapper">
         <div class="auth-card">
             <h1><?= $isStaff ? 'Staff Login' : 'Admin Login' ?></h1>
+            <?php if ($success): ?>
+                <div class="alert alert-success"><?= esc($success) ?></div>
+            <?php endif; ?>
             <?php if ($error): ?>
                 <div class="alert alert-error"><?= esc($error) ?></div>
             <?php endif; ?>

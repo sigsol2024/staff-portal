@@ -15,9 +15,9 @@ ini_set('display_errors', 0);
 
 // Database configuration
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'staff_portal');
-define('DB_USER', 'your_db_user');
-define('DB_PASS', 'your_db_password');
+define('DB_NAME', 'sigsol_sigsolportal');
+define('DB_USER', 'sigsol_sigsolportal');
+define('DB_PASS', 'sigsol_sigsolportal');
 define('DB_CHARSET', 'utf8mb4');
 
 // Base URL - Update for your domain (no trailing slash)

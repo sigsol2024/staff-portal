@@ -1,0 +1,10 @@
+# Staff Management Portal - Apache configuration
+# Shared hosting friendly
+
+# Disable directory listing
+Options -Indexes
+
+# Force HTTPS (uncomment if SSL is enabled)
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

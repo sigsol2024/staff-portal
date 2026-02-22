@@ -34,11 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$email, $token, $expires]);
 
                 $reset_url = BASE_URL . '/reset-password.php?token=' . $token;
-
+                $host = parse_url(BASE_URL, PHP_URL_HOST) ?: 'localhost';
                 $subject = 'Password Reset - Staff Portal';
                 $message = "You requested a password reset.\n\nClick here to reset: $reset_url\n\nThis link expires in " . TOKEN_EXPIRY_HOURS . " hour(s).\n\nIf you did not request this, ignore this email.";
 
-                if (@mail($email, $subject, $message, 'From: noreply@' . parse_url(BASE_URL, PHP_URL_HOST))) {
+                if (@mail($email, $subject, $message, "From: noreply@$host")) {
                     $success = 'If that email exists, a reset link has been sent.';
                 } else {
                     $success = 'Reset link (copy if mail not configured): ' . $reset_url;
@@ -67,9 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             <?php if ($success): ?>
                 <div class="alert alert-success"><?= nl2br(esc($success)) ?></div>
-                <div class="auth-links">
-                    <a href="<?= BASE_URL ?>/login.php?type=staff">Back to Login</a>
-                </div>
             <?php else: ?>
                 <form method="POST" action="">
                     <?= csrf_field() ?>
