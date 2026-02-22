@@ -54,13 +54,12 @@ If you have an existing database, run `database/migrations/001_update_staff_tabl
 
 - The pre-inserted hash may not work on all systems. Use Option A to ensure correct password.
 
-### 7. PDF Export (Optional)
+### 7. PDF Export
 
-For PDF export functionality:
+PDF export uses **client-side** generation (html2pdf.js in the browser), like the Cosmopolitan Bank receipt flow. No server-side library or install needed.
 
-**Option A (auto-install):** Visit `https://yourdomain.com/staff-portal/lib/fpdf/install_fpdf.php` in your browser. It will download and install FPDF. Delete the install file afterward.
-
-**Option B (manual):** Download FPDF from https://www.fpdf.org/ (single file: fpdf.php), create folder `lib/fpdf/`, and place `fpdf.php` inside.
+- From **View Staff** or **Staff List**, click **Download PDF**. A printable page opens; click **Download PDF** on that page to save the file.
+- The page loads html2pdf from a CDN; the site must be able to load `cdnjs.cloudflare.com` (or deploy `assets/js/html2pdf.bundle.min.js` locally and change the script src in `admin/export-pdf.php`).
 
 ### 8. First Login
 
@@ -107,8 +106,7 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 - Ensure allowed file types: JPG, PNG
 
 **PDF export not working**
-- Download fpdf.php from fpdf.org and place in `lib/fpdf/fpdf.php`
-- Ensure the lib/fpdf folder exists and is readable
+- PDF is generated in the browser. Ensure JavaScript is enabled and the page can load the CDN script (cdnjs.cloudflare.com). If your environment blocks CDNs, copy `html2pdf.bundle.min.js` into `assets/js/` and update the script src in `admin/export-pdf.php`.
 
 **Forgot password email not sent**
 - Shared hosting may not have mail() configured
