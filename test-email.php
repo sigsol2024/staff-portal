@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Email is disabled in configuration. Set MAIL_ENABLED to true in config/config.php.';
         } else {
             $subject = 'Staff Portal – Test Email';
-            $body_plain = "This is a test email from the Staff Portal.\n\nIf you received this, the email configuration is working correctly.\n\nSent at: " . date('Y-m-d H:i:s');
-            $sent = send_mail($email, $subject, $body_plain);
+            $content = "This is a test email from the Staff Portal.\n\nIf you received this, the email configuration is working correctly.\n\nSent at: " . date('Y-m-d H:i:s');
+            $sent = send_portal_email($email, $subject, 'Test email', $content, []);
             if ($sent) {
                 $success = 'Test email sent to ' . esc($email) . '. Check the inbox (and spam folder).';
             } else {

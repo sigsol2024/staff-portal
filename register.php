@@ -104,8 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdo->prepare("DELETE FROM verification_codes WHERE email = ? AND type = 'registration'")->execute([$email]);
                     $pdo->prepare("INSERT INTO verification_codes (email, code, type, expires_at) VALUES (?, ?, 'registration', ?)")->execute([$email, $code, $expires]);
                     $subject = 'Verify your email - Staff Portal';
-                    $body = "Your verification code is: $code\n\nIt expires in " . OTP_EXPIRY_MINUTES . " minutes.\n\nIf you did not register, ignore this email.";
-                    send_mail($email, $subject, $body);
+                    $content = "Use the code below to verify your email. It expires in " . OTP_EXPIRY_MINUTES . " minutes.\n\nIf you did not register, ignore this email.";
+                    send_portal_email($email, $subject, 'Verify your email', $content, ['code' => $code]);
                     header('Location: ' . BASE_URL . '/verify-email.php?email=' . rawurlencode($email));
                     exit;
                 } catch (PDOException $e) {

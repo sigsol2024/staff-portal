@@ -24,8 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare("DELETE FROM verification_codes WHERE email = ? AND type = 'login_otp' AND user_type = ?")->execute([$email, $user_type]);
         $pdo->prepare("INSERT INTO verification_codes (email, code, type, user_type, expires_at) VALUES (?, ?, 'login_otp', ?, ?)")->execute([$email, $code, $user_type, $expires]);
         $subject = $user_type === 'admin' ? 'Your login code - Admin Portal' : 'Your login code - Staff Portal';
-        $body = "Your one-time login code is: $code\n\nIt expires in " . OTP_EXPIRY_MINUTES . " minutes.";
-        send_mail($email, $subject, $body);
+        $content = "Use the code below to sign in. It expires in " . OTP_EXPIRY_MINUTES . " minutes.";
+        send_portal_email($email, $subject, 'Your login code', $content, ['code' => $code]);
         header('Location: ' . BASE_URL . '/otp-verify.php?resent=1');
         exit;
     }

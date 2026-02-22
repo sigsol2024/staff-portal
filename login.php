@@ -67,8 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdo->prepare("DELETE FROM verification_codes WHERE email = ? AND type = 'login_otp' AND user_type = 'staff'")->execute([$email]);
                     $pdo->prepare("INSERT INTO verification_codes (email, code, type, user_type, expires_at) VALUES (?, ?, 'login_otp', 'staff', ?)")->execute([$email, $code, $expires]);
                     $subject = 'Your login code - Staff Portal';
-                    $body = "Your one-time login code is: $code\n\nIt expires in " . OTP_EXPIRY_MINUTES . " minutes.";
-                    send_mail($email, $subject, $body);
+                    $content = "Use the code below to sign in. It expires in " . OTP_EXPIRY_MINUTES . " minutes.";
+                    send_portal_email($email, $subject, 'Your login code', $content, ['code' => $code]);
                     $_SESSION['pending_otp_email'] = $email;
                     $_SESSION['pending_otp_type'] = 'staff';
                     $_SESSION['pending_otp_id'] = $user['id'];
@@ -89,8 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdo->prepare("DELETE FROM verification_codes WHERE email = ? AND type = 'login_otp' AND user_type = 'admin'")->execute([$email]);
                     $pdo->prepare("INSERT INTO verification_codes (email, code, type, user_type, expires_at) VALUES (?, ?, 'login_otp', 'admin', ?)")->execute([$email, $code, $expires]);
                     $subject = 'Your login code - Admin Portal';
-                    $body = "Your one-time login code is: $code\n\nIt expires in " . OTP_EXPIRY_MINUTES . " minutes.";
-                    send_mail($email, $subject, $body);
+                    $content = "Use the code below to sign in. It expires in " . OTP_EXPIRY_MINUTES . " minutes.";
+                    send_portal_email($email, $subject, 'Your login code', $content, ['code' => $code]);
                     $_SESSION['pending_otp_email'] = $email;
                     $_SESSION['pending_otp_type'] = 'admin';
                     $_SESSION['pending_otp_id'] = $admin['id'];

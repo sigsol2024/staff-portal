@@ -36,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $reset_url = BASE_URL . '/reset-password.php?token=' . $token;
                 $subject = 'Password Reset - Staff Portal';
-                $body = "You requested a password reset.\n\nClick here to reset: $reset_url\n\nThis link expires in " . TOKEN_EXPIRY_HOURS . " hour(s).\n\nIf you did not request this, ignore this email.";
-                $sent = send_mail($email, $subject, $body);
+                $content = "You requested a password reset. Use the button below to set a new password.\n\nThis link expires in " . TOKEN_EXPIRY_HOURS . " hour(s).\n\nIf you did not request this, ignore this email.";
+                $sent = send_portal_email($email, $subject, 'Reset your password', $content, ['cta_url' => $reset_url, 'cta_text' => 'Reset password']);
                 $success = $sent ? 'If that email exists, a reset link has been sent. Check your inbox.' : 'Email could not be sent. Check SMTP settings in config. Reset link: ' . $reset_url;
             } else {
                 $success = 'If that email exists, a reset link has been sent.';
