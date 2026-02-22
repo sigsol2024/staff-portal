@@ -1,5 +1,6 @@
 <?php
 define('STAFF_PORTAL', true);
+define('SKIP_HTTP_HEADERS', true); // So only PDF headers are sent
 ob_start();
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/auth.php';
@@ -24,7 +25,7 @@ if ($id) {
     $rows = $stmt->fetchAll();
 }
 
-$fpdf_path = ROOT_PATH . '/lib/fpdf/fpdf.php';
+$fpdf_path = file_exists(__DIR__ . '/../lib/fpdf/fpdf.php') ? __DIR__ . '/../lib/fpdf/fpdf.php' : ROOT_PATH . '/lib/fpdf/fpdf.php';
 if (!file_exists($fpdf_path)) {
     ob_end_clean();
     $install_url = BASE_URL . '/lib/fpdf/install_fpdf.php';
@@ -34,6 +35,12 @@ if (!file_exists($fpdf_path)) {
 }
 
 require_once $fpdf_path;
+if (!class_exists('FPDF')) {
+    ob_end_clean();
+    set_flash('error', 'PDF library failed to load. Re-download fpdf.php from https://www.fpdf.org/ and replace lib/fpdf/fpdf.php.');
+    header('Location: ' . BASE_URL . '/admin/staff-list.php');
+    exit;
+}
 
 class StaffPDF extends FPDF
 {
@@ -85,12 +92,12 @@ if (empty($rows)) {
     }
     $pdf->Ln();
     foreach ($rows as $row) {
-        $pdf->Cell($w[0], 7, substr($row['full_name'], 0, 25), 1, 0);
-        $pdf->Cell($w[1], 7, substr($row['email'], 0, 30), 1, 0);
-        $pdf->Cell($w[2], 7, substr($row['position'] ?? '-', 0, 20), 1, 0);
-        $pdf->Cell($w[3], 7, format_date($row['date_of_birth']), 1, 0);
-        $pdf->Cell($w[4], 7, format_date($row['date_joined']), 1, 0);
-        $pdf->Cell($w[5], 7, ucfirst($row['status']), 1, 0);
+        $pdf->Cell($w[0], 7, substr((string) ($row['full_name'] ?? ''), 0, 25), 1, 0);
+        $pdf->Cell($w[1], 7, substr((string) ($row['email'] ?? ''), 0, 30), 1, 0);
+        $pdf->Cell($w[2], 7, substr((string) ($row['position'] ?? '-'), 0, 20), 1, 0);
+        $pdf->Cell($w[3], 7, format_date($row['date_of_birth'] ?? null), 1, 0);
+        $pdf->Cell($w[4], 7, format_date($row['date_joined'] ?? null), 1, 0);
+        $pdf->Cell($w[5], 7, ucfirst((string) ($row['status'] ?? '')), 1, 0);
         $pdf->Ln();
     }
 }

@@ -66,11 +66,13 @@ define('MAIL_FROM_ADDRESS', 'portal@signature-solutions.com');
 define('MAIL_FROM_NAME', 'Staff Portal');
 define('OTP_EXPIRY_MINUTES', 10);                // 6-digit OTP and verification code validity
 
-// Security headers
-header('X-Frame-Options: SAMEORIGIN');
-header('X-Content-Type-Options: nosniff');
-header('X-XSS-Protection: 1; mode=block');
-header('Referrer-Policy: strict-origin-when-cross-origin');
+// Security headers (skipped for download scripts: PDF/CSV export)
+if (!defined('SKIP_HTTP_HEADERS')) {
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Type-Options: nosniff');
+    header('X-XSS-Protection: 1; mode=block');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+}
 
 // Session configuration
 if (session_status() === PHP_SESSION_NONE) {
