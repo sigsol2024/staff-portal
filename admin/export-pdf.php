@@ -1,5 +1,6 @@
 <?php
 define('STAFF_PORTAL', true);
+ob_start();
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
@@ -25,6 +26,7 @@ if ($id) {
 
 $fpdf_path = ROOT_PATH . '/lib/fpdf/fpdf.php';
 if (!file_exists($fpdf_path)) {
+    ob_end_clean();
     $install_url = BASE_URL . '/lib/fpdf/install_fpdf.php';
     set_flash('error', 'PDF export requires FPDF. Visit ' . $install_url . ' to install, or manually download from https://www.fpdf.org/ and place fpdf.php in lib/fpdf/');
     header('Location: ' . BASE_URL . '/admin/staff-list.php');
@@ -35,15 +37,27 @@ require_once $fpdf_path;
 
 class StaffPDF extends FPDF
 {
+    private function pageWidth()
+    {
+        if (property_exists($this, 'w')) {
+            return $this->w;
+        }
+        if (method_exists($this, 'GetPageWidth')) {
+            return $this->GetPageWidth();
+        }
+        return 210; // A4 default mm
+    }
+
     public function Header()
     {
+        $w = $this->pageWidth();
         $this->SetFillColor(10, 31, 68); // Navy
-        $this->Rect(0, 0, $this->w, 20, 'F');
+        $this->Rect(0, 0, $w, 20, 'F');
         $this->SetTextColor(255, 255, 255);
         $this->SetFont('Arial', 'B', 14);
         $this->Cell(0, 10, 'Staff Management Portal - Staff Export', 0, 1, 'L');
         $this->SetFillColor(134, 201, 62); // Accent #86c93e
-        $this->Rect(0, 20, $this->w, 4, 'F');
+        $this->Rect(0, 20, $w, 4, 'F');
         $this->SetY(30);
         $this->SetTextColor(0, 0, 0);
     }
@@ -82,5 +96,6 @@ if (empty($rows)) {
 }
 
 $filename = 'staff_export_' . ($id ? $id : 'all') . '_' . date('Y-m-d') . '.pdf';
+ob_end_clean();
 $pdf->Output('D', $filename);
 exit;
