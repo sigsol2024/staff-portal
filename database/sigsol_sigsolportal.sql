@@ -81,6 +81,7 @@ CREATE TABLE `password_reset_tokens` (
 
 --
 -- Table structure for table `staff`
+-- Single schema: includes all columns (no separate migrations)
 --
 
 CREATE TABLE `staff` (
@@ -90,15 +91,45 @@ CREATE TABLE `staff` (
   `full_name` varchar(255) NOT NULL,
   `date_of_birth` date DEFAULT NULL,
   `date_joined` date DEFAULT NULL,
+  `confirmation_date` date DEFAULT NULL,
   `position` varchar(255) DEFAULT NULL,
   `biography` text DEFAULT NULL,
   `phone_number` varchar(50) DEFAULT NULL,
   `gender` varchar(20) DEFAULT NULL,
   `address` text DEFAULT NULL,
+  `marital_status` varchar(50) DEFAULT NULL,
   `profile_image` varchar(255) DEFAULT NULL,
   `status` enum('active','suspended') NOT NULL DEFAULT 'active',
   `failed_attempts` int(11) NOT NULL DEFAULT 0,
   `locked_until` datetime DEFAULT NULL,
+  `employee_id` varchar(100) DEFAULT NULL,
+  `department` varchar(255) DEFAULT NULL,
+  `employment_type` varchar(50) DEFAULT NULL COMMENT 'Full-time/Part-time/Contract',
+  `reporting_manager` varchar(255) DEFAULT NULL,
+  `work_location` varchar(255) DEFAULT NULL,
+  `basic_salary` decimal(12,2) DEFAULT NULL,
+  `housing_allowance` decimal(12,2) DEFAULT NULL,
+  `transport_allowance` decimal(12,2) DEFAULT NULL,
+  `other_allowances` text DEFAULT NULL,
+  `gross_monthly_salary` decimal(12,2) DEFAULT NULL,
+  `overtime_rate` varchar(100) DEFAULT NULL,
+  `bonus_commission_structure` text DEFAULT NULL,
+  `bank_name` varchar(255) DEFAULT NULL,
+  `account_name` varchar(255) DEFAULT NULL,
+  `account_number` varchar(100) DEFAULT NULL,
+  `bvn` varchar(50) DEFAULT NULL,
+  `tax_identification_number` varchar(100) DEFAULT NULL COMMENT 'TIN',
+  `pension_fund_administrator` varchar(255) DEFAULT NULL,
+  `pension_pin` varchar(100) DEFAULT NULL,
+  `nhf_number` varchar(100) DEFAULT NULL,
+  `nhis_hmo_provider` varchar(255) DEFAULT NULL,
+  `employee_contribution_percentages` text DEFAULT NULL,
+  `new_hire` tinyint(1) DEFAULT NULL COMMENT '1=Yes, 0=No',
+  `exit_termination_date` date DEFAULT NULL,
+  `salary_adjustment_notes` text DEFAULT NULL,
+  `promotion_role_change` text DEFAULT NULL,
+  `bank_detail_update` text DEFAULT NULL,
+  `declaration_accepted` tinyint(1) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

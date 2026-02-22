@@ -22,10 +22,10 @@ Upload the entire `staff-portal` folder to your web root. For example:
 1. Open **phpMyAdmin** from cPanel
 2. Select your database
 3. Click **Import**
-4. Choose `database/staff_portal.sql`
+4. Choose `database/sigsol_sigsolportal.sql` (or your main schema file)
 5. Click **Go** to import
 
-**If you already have the database and only need to add new columns** (e.g. address, gender, phone): open the **SQL** tab in phpMyAdmin, paste the contents of `database/migrations/001_add_staff_address_gender_phone.sql`, and run it once.
+This single schema file includes all tables and columns. For a fresh install, import it once. If you already have an older database, you may need to add missing columns manually or re-import (back up data first).
 
 ### 4. Configure config.php
 

@@ -131,6 +131,41 @@ a:hover {
   color: var(--gray-dark);
 }
 
+.multistep-card-wide {
+  max-width: 560px;
+}
+
+.multistep-progress-7 .step-dot {
+  width: 28px;
+  height: 28px;
+  font-size: 0.8rem;
+}
+
+.multistep-progress-7 .step-line {
+  width: 20px;
+}
+
+.declaration-box {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(10, 31, 68, 0.06);
+  border-radius: var(--radius);
+  border: 1px solid var(--gray);
+}
+
+.declaration-text {
+  margin: 0 0 0.5rem 0;
+  font-weight: 500;
+}
+
+.declaration-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
 .step-buttons {
   display: flex;
   gap: 0.75rem;
@@ -699,6 +734,14 @@ label .required {
   .edit-staff-form-grid .form-group-full {
     grid-column: 1 / -1;
   }
+}
+
+.form-section-title {
+  font-size: 1rem;
+  margin: 1.25rem 0 0.75rem 0;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--gray);
+  color: var(--primary);
 }
 
 .edit-staff-form-actions {

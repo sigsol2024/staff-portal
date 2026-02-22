@@ -31,16 +31,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = $_POST['action'] ?? 'profile';
 
         if ($action === 'profile') {
+            $t = function($v) { $v = trim($v ?? ''); return $v === '' ? null : $v; };
             $email = trim($_POST['email'] ?? '');
             $full_name = trim($_POST['full_name'] ?? '');
-            $date_of_birth = trim($_POST['date_of_birth'] ?? '') ?: null;
-            $date_joined = trim($_POST['date_joined'] ?? '') ?: null;
-            $position = trim($_POST['position'] ?? '') ?: null;
-            $biography = trim($_POST['biography'] ?? '') ?: null;
-            $phone_number = trim($_POST['phone_number'] ?? '') ?: null;
-            $gender = trim($_POST['gender'] ?? '') ?: null;
-            $address = trim($_POST['address'] ?? '') ?: null;
+            $date_of_birth = $t($_POST['date_of_birth'] ?? '');
+            $date_joined = $t($_POST['date_joined'] ?? '');
+            $position = $t($_POST['position'] ?? '');
+            $biography = $t($_POST['biography'] ?? '');
+            $phone_number = $t($_POST['phone_number'] ?? '');
+            $gender = $t($_POST['gender'] ?? '');
+            $address = $t($_POST['address'] ?? '');
             $status = ($_POST['status'] ?? 'active') === 'suspended' ? 'suspended' : 'active';
+            $marital_status = $t($_POST['marital_status'] ?? '');
+            $employee_id = $t($_POST['employee_id'] ?? '');
+            $department = $t($_POST['department'] ?? '');
+            $employment_type = $t($_POST['employment_type'] ?? '');
+            $confirmation_date = $t($_POST['confirmation_date'] ?? '');
+            $reporting_manager = $t($_POST['reporting_manager'] ?? '');
+            $work_location = $t($_POST['work_location'] ?? '');
+            $other_allowances = $t($_POST['other_allowances'] ?? '');
+            $overtime_rate = $t($_POST['overtime_rate'] ?? '');
+            $bonus_commission_structure = $t($_POST['bonus_commission_structure'] ?? '');
+            $bank_name = $t($_POST['bank_name'] ?? '');
+            $account_name = $t($_POST['account_name'] ?? '');
+            $account_number = $t($_POST['account_number'] ?? '');
+            $bvn = $t($_POST['bvn'] ?? '');
+            $tax_identification_number = $t($_POST['tax_identification_number'] ?? '');
+            $pension_fund_administrator = $t($_POST['pension_fund_administrator'] ?? '');
+            $pension_pin = $t($_POST['pension_pin'] ?? '');
+            $nhf_number = $t($_POST['nhf_number'] ?? '');
+            $nhis_hmo_provider = $t($_POST['nhis_hmo_provider'] ?? '');
+            $employee_contribution_percentages = $t($_POST['employee_contribution_percentages'] ?? '');
+            $new_hire = isset($_POST['new_hire']) && $_POST['new_hire'] === '1' ? 1 : (isset($_POST['new_hire']) && $_POST['new_hire'] === '0' ? 0 : null);
+            $salary_adjustment_notes = $t($_POST['salary_adjustment_notes'] ?? '');
+            $promotion_role_change = $t($_POST['promotion_role_change'] ?? '');
+            $bank_detail_update = $t($_POST['bank_detail_update'] ?? '');
+            $exit_termination_date = $t($_POST['exit_termination_date'] ?? '') ?: null;
+            $decimal = function($v) { $v = trim($v ?? ''); return $v === '' ? null : (is_numeric($v) ? $v : null); };
+            $basic_salary = $decimal($_POST['basic_salary'] ?? '');
+            $housing_allowance = $decimal($_POST['housing_allowance'] ?? '');
+            $transport_allowance = $decimal($_POST['transport_allowance'] ?? '');
+            $gross_monthly_salary = $decimal($_POST['gross_monthly_salary'] ?? '');
 
             if (empty($email) || empty($full_name)) {
                 $error = 'Email and full name are required.';
@@ -53,10 +84,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Email already in use.';
                 } else {
                     $stmt = $pdo->prepare("
-                        UPDATE staff SET email = ?, full_name = ?, date_of_birth = ?, date_joined = ?, position = ?, biography = ?, phone_number = ?, gender = ?, address = ?, status = ?, updated_at = NOW()
+                        UPDATE staff SET email = ?, full_name = ?, date_of_birth = ?, date_joined = ?, position = ?, biography = ?, phone_number = ?, gender = ?, address = ?, status = ?,
+                        marital_status = ?, employee_id = ?, department = ?, employment_type = ?, confirmation_date = ?, reporting_manager = ?, work_location = ?,
+                        basic_salary = ?, housing_allowance = ?, transport_allowance = ?, other_allowances = ?, gross_monthly_salary = ?, overtime_rate = ?, bonus_commission_structure = ?,
+                        bank_name = ?, account_name = ?, account_number = ?, bvn = ?,
+                        tax_identification_number = ?, pension_fund_administrator = ?, pension_pin = ?, nhf_number = ?, nhis_hmo_provider = ?, employee_contribution_percentages = ?,
+                        new_hire = ?, exit_termination_date = ?, salary_adjustment_notes = ?, promotion_role_change = ?, bank_detail_update = ?, updated_at = NOW()
                         WHERE id = ?
                     ");
-                    $stmt->execute([$email, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address, $status, $id]);
+                    $stmt->execute([$email, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address, $status,
+                        $marital_status, $employee_id, $department, $employment_type, $confirmation_date, $reporting_manager, $work_location,
+                        $basic_salary, $housing_allowance, $transport_allowance, $other_allowances, $gross_monthly_salary, $overtime_rate, $bonus_commission_structure,
+                        $bank_name, $account_name, $account_number, $bvn,
+                        $tax_identification_number, $pension_fund_administrator, $pension_pin, $nhf_number, $nhis_hmo_provider, $employee_contribution_percentages,
+                        $new_hire, $exit_termination_date, $salary_adjustment_notes, $promotion_role_change, $bank_detail_update, $id]);
                     set_flash('success', 'Staff updated.');
                     header('Location: ' . BASE_URL . '/admin/view-staff.php?id=' . $id);
                     exit;
@@ -185,14 +226,54 @@ $flash = get_flash();
                             </select>
                         </div>
                         <div class="form-group">
+                            <label for="marital_status">Marital status</label>
+                            <select id="marital_status" name="marital_status" class="form-control">
+                                <option value="">— Select —</option>
+                                <option value="Single" <?= ($staff['marital_status'] ?? '') === 'Single' ? 'selected' : '' ?>>Single</option>
+                                <option value="Married" <?= ($staff['marital_status'] ?? '') === 'Married' ? 'selected' : '' ?>>Married</option>
+                                <option value="Divorced" <?= ($staff['marital_status'] ?? '') === 'Divorced' ? 'selected' : '' ?>>Divorced</option>
+                                <option value="Widowed" <?= ($staff['marital_status'] ?? '') === 'Widowed' ? 'selected' : '' ?>>Widowed</option>
+                                <option value="Other" <?= ($staff['marital_status'] ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label for="phone_number">Phone number</label>
                             <input type="tel" id="phone_number" name="phone_number" class="form-control"
                                    value="<?= esc($staff['phone_number'] ?? '') ?>">
                         </div>
                         <div class="form-group">
-                            <label for="position">Position</label>
+                            <label for="position">Job title</label>
                             <input type="text" id="position" name="position" class="form-control"
                                    value="<?= esc($staff['position'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="employee_id">Employee ID</label>
+                            <input type="text" id="employee_id" name="employee_id" class="form-control" value="<?= esc($staff['employee_id'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="department">Department</label>
+                            <input type="text" id="department" name="department" class="form-control" value="<?= esc($staff['department'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="employment_type">Employment type</label>
+                            <select id="employment_type" name="employment_type" class="form-control">
+                                <option value="">— Select —</option>
+                                <option value="Full-time" <?= ($staff['employment_type'] ?? '') === 'Full-time' ? 'selected' : '' ?>>Full-time</option>
+                                <option value="Part-time" <?= ($staff['employment_type'] ?? '') === 'Part-time' ? 'selected' : '' ?>>Part-time</option>
+                                <option value="Contract" <?= ($staff['employment_type'] ?? '') === 'Contract' ? 'selected' : '' ?>>Contract</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmation_date">Confirmation date</label>
+                            <input type="date" id="confirmation_date" name="confirmation_date" class="form-control" value="<?= esc($staff['confirmation_date'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="reporting_manager">Reporting manager</label>
+                            <input type="text" id="reporting_manager" name="reporting_manager" class="form-control" value="<?= esc($staff['reporting_manager'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="work_location">Work location</label>
+                            <input type="text" id="work_location" name="work_location" class="form-control" value="<?= esc($staff['work_location'] ?? '') ?>">
                         </div>
                         <div class="form-group">
                             <label for="status">Status</label>
@@ -202,12 +283,108 @@ $flash = get_flash();
                             </select>
                         </div>
                         <div class="form-group form-group-full">
-                            <label for="address">Address</label>
+                            <label for="address">Residential address</label>
                             <textarea id="address" name="address" class="form-control" rows="3" placeholder="Street, city, country"><?= esc($staff['address'] ?? '') ?></textarea>
                         </div>
                         <div class="form-group form-group-full">
                             <label for="biography">Biography</label>
                             <textarea id="biography" name="biography" class="form-control" rows="4" placeholder="Short bio or role description"><?= esc($staff['biography'] ?? '') ?></textarea>
+                        </div>
+
+                        <h3 class="form-section-title">Salary &amp; Bank</h3>
+                        <div class="form-group">
+                            <label for="basic_salary">Basic salary</label>
+                            <input type="number" id="basic_salary" name="basic_salary" class="form-control" step="0.01" min="0" value="<?= esc($staff['basic_salary'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="housing_allowance">Housing allowance</label>
+                            <input type="number" id="housing_allowance" name="housing_allowance" class="form-control" step="0.01" min="0" value="<?= esc($staff['housing_allowance'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="transport_allowance">Transport allowance</label>
+                            <input type="number" id="transport_allowance" name="transport_allowance" class="form-control" step="0.01" min="0" value="<?= esc($staff['transport_allowance'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="gross_monthly_salary">Gross monthly salary</label>
+                            <input type="number" id="gross_monthly_salary" name="gross_monthly_salary" class="form-control" step="0.01" min="0" value="<?= esc($staff['gross_monthly_salary'] ?? '') ?>">
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="other_allowances">Other allowances</label>
+                            <textarea id="other_allowances" name="other_allowances" class="form-control" rows="1"><?= esc($staff['other_allowances'] ?? '') ?></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="overtime_rate">Overtime rate</label>
+                            <input type="text" id="overtime_rate" name="overtime_rate" class="form-control" value="<?= esc($staff['overtime_rate'] ?? '') ?>">
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="bonus_commission_structure">Bonus/Commission structure</label>
+                            <textarea id="bonus_commission_structure" name="bonus_commission_structure" class="form-control" rows="1"><?= esc($staff['bonus_commission_structure'] ?? '') ?></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="bank_name">Bank name</label>
+                            <input type="text" id="bank_name" name="bank_name" class="form-control" value="<?= esc($staff['bank_name'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="account_name">Account name</label>
+                            <input type="text" id="account_name" name="account_name" class="form-control" value="<?= esc($staff['account_name'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="account_number">Account number</label>
+                            <input type="text" id="account_number" name="account_number" class="form-control" value="<?= esc($staff['account_number'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="bvn">BVN</label>
+                            <input type="text" id="bvn" name="bvn" class="form-control" value="<?= esc($staff['bvn'] ?? '') ?>">
+                        </div>
+
+                        <h3 class="form-section-title">Statutory &amp; Payroll</h3>
+                        <div class="form-group">
+                            <label for="tax_identification_number">TIN</label>
+                            <input type="text" id="tax_identification_number" name="tax_identification_number" class="form-control" value="<?= esc($staff['tax_identification_number'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="pension_fund_administrator">PFA</label>
+                            <input type="text" id="pension_fund_administrator" name="pension_fund_administrator" class="form-control" value="<?= esc($staff['pension_fund_administrator'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="pension_pin">Pension PIN</label>
+                            <input type="text" id="pension_pin" name="pension_pin" class="form-control" value="<?= esc($staff['pension_pin'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="nhf_number">NHF number</label>
+                            <input type="text" id="nhf_number" name="nhf_number" class="form-control" value="<?= esc($staff['nhf_number'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="nhis_hmo_provider">NHIS/HMO provider</label>
+                            <input type="text" id="nhis_hmo_provider" name="nhis_hmo_provider" class="form-control" value="<?= esc($staff['nhis_hmo_provider'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="employee_contribution_percentages">Contribution %</label>
+                            <input type="text" id="employee_contribution_percentages" name="employee_contribution_percentages" class="form-control" value="<?= esc($staff['employee_contribution_percentages'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_hire">New hire</label>
+                            <select id="new_hire" name="new_hire" class="form-control">
+                                <option value="">—</option>
+                                <option value="1" <?= (string)($staff['new_hire'] ?? '') === '1' ? 'selected' : '' ?>>Yes</option>
+                                <option value="0" <?= (string)($staff['new_hire'] ?? '') === '0' ? 'selected' : '' ?>>No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="exit_termination_date">Exit/Termination date</label>
+                            <input type="date" id="exit_termination_date" name="exit_termination_date" class="form-control" value="<?= esc($staff['exit_termination_date'] ?? '') ?>">
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="salary_adjustment_notes">Salary adjustment notes</label>
+                            <textarea id="salary_adjustment_notes" name="salary_adjustment_notes" class="form-control" rows="1"><?= esc($staff['salary_adjustment_notes'] ?? '') ?></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="promotion_role_change">Promotion/Role change</label>
+                            <input type="text" id="promotion_role_change" name="promotion_role_change" class="form-control" value="<?= esc($staff['promotion_role_change'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="bank_detail_update">Bank detail update</label>
+                            <input type="text" id="bank_detail_update" name="bank_detail_update" class="form-control" value="<?= esc($staff['bank_detail_update'] ?? '') ?>">
                         </div>
                     </div>
                     <div class="edit-staff-form-actions">

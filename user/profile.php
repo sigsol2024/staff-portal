@@ -31,12 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $phone_number = trim($_POST['phone_number'] ?? '') ?: null;
             $gender = trim($_POST['gender'] ?? '') ?: null;
             $address = trim($_POST['address'] ?? '') ?: null;
+            $marital_status = trim($_POST['marital_status'] ?? '') ?: null;
 
             if (empty($full_name)) {
                 $error = 'Full name is required.';
             } else {
-                $stmt = $pdo->prepare("UPDATE staff SET full_name = ?, date_of_birth = ?, biography = ?, phone_number = ?, gender = ?, address = ?, updated_at = NOW() WHERE id = ?");
-                $stmt->execute([$full_name, $date_of_birth, $biography, $phone_number, $gender, $address, $staff['id']]);
+                $stmt = $pdo->prepare("UPDATE staff SET full_name = ?, date_of_birth = ?, biography = ?, phone_number = ?, gender = ?, address = ?, marital_status = ?, updated_at = NOW() WHERE id = ?");
+                $stmt->execute([$full_name, $date_of_birth, $biography, $phone_number, $gender, $address, $marital_status, $staff['id']]);
                 set_flash('success', 'Profile updated.');
                 header('Location: ' . BASE_URL . '/user/profile.php');
                 exit;
@@ -154,12 +155,23 @@ $flash = get_flash();
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="phone_number">Phone Number</label>
+                        <label for="marital_status">Marital status</label>
+                        <select id="marital_status" name="marital_status" class="form-control">
+                            <option value="">— Select —</option>
+                            <option value="Single" <?= ($staff['marital_status'] ?? '') === 'Single' ? 'selected' : '' ?>>Single</option>
+                            <option value="Married" <?= ($staff['marital_status'] ?? '') === 'Married' ? 'selected' : '' ?>>Married</option>
+                            <option value="Divorced" <?= ($staff['marital_status'] ?? '') === 'Divorced' ? 'selected' : '' ?>>Divorced</option>
+                            <option value="Widowed" <?= ($staff['marital_status'] ?? '') === 'Widowed' ? 'selected' : '' ?>>Widowed</option>
+                            <option value="Other" <?= ($staff['marital_status'] ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone_number">Phone number</label>
                         <input type="tel" id="phone_number" name="phone_number" class="form-control"
                                value="<?= esc($staff['phone_number'] ?? '') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="address">Address</label>
+                        <label for="address">Residential address</label>
                         <textarea id="address" name="address" class="form-control" rows="3"><?= esc($staff['address'] ?? '') ?></textarea>
                     </div>
                     <div class="form-group">

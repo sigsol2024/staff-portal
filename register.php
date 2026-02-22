@@ -13,18 +13,53 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validate_csrf($_POST['csrf_token'] ?? '')) {
         $error = 'Invalid request. Please try again.';
+    } elseif (empty($_POST['declaration_accepted'])) {
+        $error = 'You must confirm that the information is accurate and complete.';
     } else {
         $email = trim($_POST['email'] ?? '');
         $full_name = trim($_POST['full_name'] ?? '');
         $password = $_POST['password'] ?? '';
         $password_confirm = $_POST['password_confirm'] ?? '';
-        $date_of_birth = trim($_POST['date_of_birth'] ?? '') ?: null;
-        $date_joined = trim($_POST['date_joined'] ?? '') ?: null;
-        $position = trim($_POST['position'] ?? '') ?: null;
-        $gender = trim($_POST['gender'] ?? '') ?: null;
-        $phone_number = trim($_POST['phone_number'] ?? '') ?: null;
-        $address = trim($_POST['address'] ?? '') ?: null;
-        $biography = trim($_POST['biography'] ?? '') ?: null;
+
+        $t = function($v) { $v = trim($v ?? ''); return $v === '' ? null : $v; };
+        $date_of_birth = $t($_POST['date_of_birth'] ?? '') ?: null;
+        $date_joined = $t($_POST['date_joined'] ?? '') ?: null;
+        $confirmation_date = $t($_POST['confirmation_date'] ?? '') ?: null;
+        $exit_termination_date = $t($_POST['exit_termination_date'] ?? '') ?: null;
+        $position = $t($_POST['position'] ?? '');
+        $gender = $t($_POST['gender'] ?? '');
+        $phone_number = $t($_POST['phone_number'] ?? '');
+        $address = $t($_POST['address'] ?? '');
+        $biography = $t($_POST['biography'] ?? '');
+        $marital_status = $t($_POST['marital_status'] ?? '');
+        $employee_id = $t($_POST['employee_id'] ?? '');
+        $department = $t($_POST['department'] ?? '');
+        $employment_type = $t($_POST['employment_type'] ?? '');
+        $reporting_manager = $t($_POST['reporting_manager'] ?? '');
+        $work_location = $t($_POST['work_location'] ?? '');
+        $other_allowances = $t($_POST['other_allowances'] ?? '');
+        $overtime_rate = $t($_POST['overtime_rate'] ?? '');
+        $bonus_commission_structure = $t($_POST['bonus_commission_structure'] ?? '');
+        $bank_name = $t($_POST['bank_name'] ?? '');
+        $account_name = $t($_POST['account_name'] ?? '');
+        $account_number = $t($_POST['account_number'] ?? '');
+        $bvn = $t($_POST['bvn'] ?? '');
+        $tax_identification_number = $t($_POST['tax_identification_number'] ?? '');
+        $pension_fund_administrator = $t($_POST['pension_fund_administrator'] ?? '');
+        $pension_pin = $t($_POST['pension_pin'] ?? '');
+        $nhf_number = $t($_POST['nhf_number'] ?? '');
+        $nhis_hmo_provider = $t($_POST['nhis_hmo_provider'] ?? '');
+        $employee_contribution_percentages = $t($_POST['employee_contribution_percentages'] ?? '');
+        $new_hire = isset($_POST['new_hire']) && $_POST['new_hire'] === '1' ? 1 : null;
+        $salary_adjustment_notes = $t($_POST['salary_adjustment_notes'] ?? '');
+        $promotion_role_change = $t($_POST['promotion_role_change'] ?? '');
+        $bank_detail_update = $t($_POST['bank_detail_update'] ?? '');
+
+        $decimal = function($v) { $v = trim($v ?? ''); return $v === '' ? null : (is_numeric($v) ? $v : null); };
+        $basic_salary = $decimal($_POST['basic_salary'] ?? '');
+        $housing_allowance = $decimal($_POST['housing_allowance'] ?? '');
+        $transport_allowance = $decimal($_POST['transport_allowance'] ?? '');
+        $gross_monthly_salary = $decimal($_POST['gross_monthly_salary'] ?? '');
 
         if (empty($email) || empty($full_name) || empty($password)) {
             $error = 'Email, full name and password are required.';
@@ -41,16 +76,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'This email is already registered.';
             } else {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("
-                    INSERT INTO staff (email, password, full_name, date_of_birth, date_joined, position, biography, phone_number, gender, address, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
-                ");
+                $sql = "INSERT INTO staff (email, password, full_name, date_of_birth, date_joined, position, biography, phone_number, gender, address, status,
+                    marital_status, employee_id, department, employment_type, confirmation_date, reporting_manager, work_location,
+                    basic_salary, housing_allowance, transport_allowance, other_allowances, gross_monthly_salary, overtime_rate, bonus_commission_structure,
+                    bank_name, account_name, account_number, bvn,
+                    tax_identification_number, pension_fund_administrator, pension_pin, nhf_number, nhis_hmo_provider, employee_contribution_percentages,
+                    new_hire, exit_termination_date, salary_adjustment_notes, promotion_role_change, bank_detail_update, declaration_accepted)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active',
+                    ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, 1)";
+                $stmt = $pdo->prepare($sql);
                 try {
-                    $stmt->execute([$email, $hash, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address]);
+                    $stmt->execute([
+                        $email, $hash, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address,
+                        $marital_status, $employee_id, $department, $employment_type, $confirmation_date, $reporting_manager, $work_location,
+                        $basic_salary, $housing_allowance, $transport_allowance, $other_allowances, $gross_monthly_salary, $overtime_rate, $bonus_commission_structure,
+                        $bank_name, $account_name, $account_number, $bvn,
+                        $tax_identification_number, $pension_fund_administrator, $pension_pin, $nhf_number, $nhis_hmo_provider, $employee_contribution_percentages,
+                        $new_hire, $exit_termination_date, $salary_adjustment_notes, $promotion_role_change, $bank_detail_update
+                    ]);
                     header('Location: ' . BASE_URL . '/login.php?type=staff&registered=1');
                     exit;
                 } catch (PDOException $e) {
-                    $error = 'Registration failed. Please try again.';
+                    $error = 'Registration failed. Please try again. Ensure the database schema is up to date (use database/sigsol_sigsolportal.sql).';
                 }
             }
         }
@@ -58,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $post = $_POST ?? [];
+$esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $default, ENT_QUOTES, 'UTF-8'); };
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -69,14 +121,22 @@ $post = $_POST ?? [];
 </head>
 <body>
     <div class="auth-wrapper">
-        <div class="auth-card multistep-card">
+        <div class="auth-card multistep-card multistep-card-wide">
             <h1>Staff Registration</h1>
-            <div class="multistep-progress">
+            <div class="multistep-progress multistep-progress-7">
                 <span class="step-dot active" data-step="1">1</span>
                 <span class="step-line"></span>
                 <span class="step-dot" data-step="2">2</span>
                 <span class="step-line"></span>
                 <span class="step-dot" data-step="3">3</span>
+                <span class="step-line"></span>
+                <span class="step-dot" data-step="4">4</span>
+                <span class="step-line"></span>
+                <span class="step-dot" data-step="5">5</span>
+                <span class="step-line"></span>
+                <span class="step-dot" data-step="6">6</span>
+                <span class="step-line"></span>
+                <span class="step-dot" data-step="7">7</span>
             </div>
             <?php if ($error): ?>
                 <div class="alert alert-error"><?= esc($error) ?></div>
@@ -85,11 +145,10 @@ $post = $_POST ?? [];
                 <?= csrf_field() ?>
 
                 <div class="multistep-panel active" data-step="1">
-                    <h2 class="step-title">Account</h2>
+                    <h2 class="step-title">1. Account</h2>
                     <div class="form-group">
-                        <label for="email">Email *</label>
-                        <input type="email" id="email" name="email" class="form-control" required
-                               value="<?= esc($post['email'] ?? '') ?>">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" class="form-control" required value="<?= $esc('email') ?>">
                     </div>
                     <div class="form-group">
                         <label for="password">Password * (min <?= PASSWORD_MIN_LENGTH ?> chars)</label>
@@ -103,11 +162,10 @@ $post = $_POST ?? [];
                 </div>
 
                 <div class="multistep-panel" data-step="2">
-                    <h2 class="step-title">Personal &amp; Work</h2>
+                    <h2 class="step-title">2. Employee Personal Information</h2>
                     <div class="form-group">
                         <label for="full_name">Full Name *</label>
-                        <input type="text" id="full_name" name="full_name" class="form-control" required
-                               value="<?= esc($post['full_name'] ?? '') ?>">
+                        <input type="text" id="full_name" name="full_name" class="form-control" required value="<?= $esc('full_name') ?>">
                     </div>
                     <div class="form-group">
                         <label for="gender">Gender</label>
@@ -119,24 +177,27 @@ $post = $_POST ?? [];
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="phone_number">Phone Number</label>
-                        <input type="tel" id="phone_number" name="phone_number" class="form-control"
-                               value="<?= esc($post['phone_number'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
                         <label for="date_of_birth">Date of Birth</label>
-                        <input type="date" id="date_of_birth" name="date_of_birth" class="form-control"
-                               value="<?= esc($post['date_of_birth'] ?? '') ?>">
+                        <input type="date" id="date_of_birth" name="date_of_birth" class="form-control" value="<?= $esc('date_of_birth') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="date_joined">Date Joined</label>
-                        <input type="date" id="date_joined" name="date_joined" class="form-control"
-                               value="<?= esc($post['date_joined'] ?? '') ?>">
+                        <label for="address">Residential Address</label>
+                        <textarea id="address" name="address" class="form-control" rows="2"><?= $esc('address') ?></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="position">Position</label>
-                        <input type="text" id="position" name="position" class="form-control"
-                               value="<?= esc($post['position'] ?? '') ?>">
+                        <label for="phone_number">Phone Number</label>
+                        <input type="tel" id="phone_number" name="phone_number" class="form-control" value="<?= $esc('phone_number') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="marital_status">Marital Status</label>
+                        <select id="marital_status" name="marital_status" class="form-control">
+                            <option value="">— Select —</option>
+                            <option value="Single" <?= ($post['marital_status'] ?? '') === 'Single' ? 'selected' : '' ?>>Single</option>
+                            <option value="Married" <?= ($post['marital_status'] ?? '') === 'Married' ? 'selected' : '' ?>>Married</option>
+                            <option value="Divorced" <?= ($post['marital_status'] ?? '') === 'Divorced' ? 'selected' : '' ?>>Divorced</option>
+                            <option value="Widowed" <?= ($post['marital_status'] ?? '') === 'Widowed' ? 'selected' : '' ?>>Widowed</option>
+                            <option value="Other" <?= ($post['marital_status'] ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
+                        </select>
                     </div>
                     <div class="step-buttons">
                         <button type="button" class="btn btn-primary btn-prev" data-prev="1">Previous</button>
@@ -145,17 +206,177 @@ $post = $_POST ?? [];
                 </div>
 
                 <div class="multistep-panel" data-step="3">
-                    <h2 class="step-title">Address &amp; Bio</h2>
+                    <h2 class="step-title">3. Employment Details</h2>
                     <div class="form-group">
-                        <label for="address">Address</label>
-                        <textarea id="address" name="address" class="form-control" rows="3"><?= esc($post['address'] ?? '') ?></textarea>
+                        <label for="employee_id">Employee ID (if applicable)</label>
+                        <input type="text" id="employee_id" name="employee_id" class="form-control" value="<?= $esc('employee_id') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="biography">Biography</label>
-                        <textarea id="biography" name="biography" class="form-control" rows="3"><?= esc($post['biography'] ?? '') ?></textarea>
+                        <label for="position">Job Title</label>
+                        <input type="text" id="position" name="position" class="form-control" value="<?= $esc('position') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input type="text" id="department" name="department" class="form-control" value="<?= $esc('department') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="employment_type">Employment Type</label>
+                        <select id="employment_type" name="employment_type" class="form-control">
+                            <option value="">— Select —</option>
+                            <option value="Full-time" <?= ($post['employment_type'] ?? '') === 'Full-time' ? 'selected' : '' ?>>Full-time</option>
+                            <option value="Part-time" <?= ($post['employment_type'] ?? '') === 'Part-time' ? 'selected' : '' ?>>Part-time</option>
+                            <option value="Contract" <?= ($post['employment_type'] ?? '') === 'Contract' ? 'selected' : '' ?>>Contract</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="date_joined">Employment Start Date</label>
+                        <input type="date" id="date_joined" name="date_joined" class="form-control" value="<?= $esc('date_joined') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmation_date">Confirmation Date (if applicable)</label>
+                        <input type="date" id="confirmation_date" name="confirmation_date" class="form-control" value="<?= $esc('confirmation_date') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="reporting_manager">Reporting Manager</label>
+                        <input type="text" id="reporting_manager" name="reporting_manager" class="form-control" value="<?= $esc('reporting_manager') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="work_location">Work Location</label>
+                        <input type="text" id="work_location" name="work_location" class="form-control" value="<?= $esc('work_location') ?>">
                     </div>
                     <div class="step-buttons">
                         <button type="button" class="btn btn-primary btn-prev" data-prev="2">Previous</button>
+                        <button type="button" class="btn btn-primary btn-next" data-next="4">Next</button>
+                    </div>
+                </div>
+
+                <div class="multistep-panel" data-step="4">
+                    <h2 class="step-title">4. Salary Structure</h2>
+                    <div class="form-group">
+                        <label for="basic_salary">Basic Salary</label>
+                        <input type="number" id="basic_salary" name="basic_salary" class="form-control" step="0.01" min="0" placeholder="0.00" value="<?= $esc('basic_salary') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="housing_allowance">Housing Allowance</label>
+                        <input type="number" id="housing_allowance" name="housing_allowance" class="form-control" step="0.01" min="0" value="<?= $esc('housing_allowance') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="transport_allowance">Transport Allowance</label>
+                        <input type="number" id="transport_allowance" name="transport_allowance" class="form-control" step="0.01" min="0" value="<?= $esc('transport_allowance') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="other_allowances">Other Allowances (specify)</label>
+                        <textarea id="other_allowances" name="other_allowances" class="form-control" rows="2"><?= $esc('other_allowances') ?></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="gross_monthly_salary">Gross Monthly Salary</label>
+                        <input type="number" id="gross_monthly_salary" name="gross_monthly_salary" class="form-control" step="0.01" min="0" value="<?= $esc('gross_monthly_salary') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="overtime_rate">Overtime Rate (if applicable)</label>
+                        <input type="text" id="overtime_rate" name="overtime_rate" class="form-control" value="<?= $esc('overtime_rate') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="bonus_commission_structure">Bonus/Commission Structure (if applicable)</label>
+                        <textarea id="bonus_commission_structure" name="bonus_commission_structure" class="form-control" rows="2"><?= $esc('bonus_commission_structure') ?></textarea>
+                    </div>
+                    <div class="step-buttons">
+                        <button type="button" class="btn btn-primary btn-prev" data-prev="3">Previous</button>
+                        <button type="button" class="btn btn-primary btn-next" data-next="5">Next</button>
+                    </div>
+                </div>
+
+                <div class="multistep-panel" data-step="5">
+                    <h2 class="step-title">5. Bank Details</h2>
+                    <div class="form-group">
+                        <label for="bank_name">Bank Name</label>
+                        <input type="text" id="bank_name" name="bank_name" class="form-control" value="<?= $esc('bank_name') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="account_name">Account Name</label>
+                        <input type="text" id="account_name" name="account_name" class="form-control" value="<?= $esc('account_name') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="account_number">Account Number</label>
+                        <input type="text" id="account_number" name="account_number" class="form-control" value="<?= $esc('account_number') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="bvn">BVN (if required)</label>
+                        <input type="text" id="bvn" name="bvn" class="form-control" value="<?= $esc('bvn') ?>">
+                    </div>
+                    <div class="step-buttons">
+                        <button type="button" class="btn btn-primary btn-prev" data-prev="4">Previous</button>
+                        <button type="button" class="btn btn-primary btn-next" data-next="6">Next</button>
+                    </div>
+                </div>
+
+                <div class="multistep-panel" data-step="6">
+                    <h2 class="step-title">6. Statutory &amp; Compliance Information</h2>
+                    <div class="form-group">
+                        <label for="tax_identification_number">Tax Identification Number (TIN)</label>
+                        <input type="text" id="tax_identification_number" name="tax_identification_number" class="form-control" value="<?= $esc('tax_identification_number') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="pension_fund_administrator">Pension Fund Administrator (PFA)</label>
+                        <input type="text" id="pension_fund_administrator" name="pension_fund_administrator" class="form-control" value="<?= $esc('pension_fund_administrator') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="pension_pin">Pension PIN</label>
+                        <input type="text" id="pension_pin" name="pension_pin" class="form-control" value="<?= $esc('pension_pin') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="nhf_number">NHF Number (if applicable)</label>
+                        <input type="text" id="nhf_number" name="nhf_number" class="form-control" value="<?= $esc('nhf_number') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="nhis_hmo_provider">NHIS/HMO Provider</label>
+                        <input type="text" id="nhis_hmo_provider" name="nhis_hmo_provider" class="form-control" value="<?= $esc('nhis_hmo_provider') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="employee_contribution_percentages">Employee Contribution Percentages (where applicable)</label>
+                        <input type="text" id="employee_contribution_percentages" name="employee_contribution_percentages" class="form-control" value="<?= $esc('employee_contribution_percentages') ?>">
+                    </div>
+                    <div class="step-buttons">
+                        <button type="button" class="btn btn-primary btn-prev" data-prev="5">Previous</button>
+                        <button type="button" class="btn btn-primary btn-next" data-next="7">Next</button>
+                    </div>
+                </div>
+
+                <div class="multistep-panel" data-step="7">
+                    <h2 class="step-title">7. Payroll Changes &amp; Declaration</h2>
+                    <div class="form-group">
+                        <label for="new_hire">New Hire</label>
+                        <select id="new_hire" name="new_hire" class="form-control">
+                            <option value="">— Select —</option>
+                            <option value="1" <?= ($post['new_hire'] ?? '') === '1' ? 'selected' : '' ?>>Yes</option>
+                            <option value="0" <?= ($post['new_hire'] ?? '') === '0' ? 'selected' : '' ?>>No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="exit_termination_date">Exit/Termination (Effective Date)</label>
+                        <input type="date" id="exit_termination_date" name="exit_termination_date" class="form-control" value="<?= $esc('exit_termination_date') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="salary_adjustment_notes">Salary Adjustment (Old vs New Salary)</label>
+                        <textarea id="salary_adjustment_notes" name="salary_adjustment_notes" class="form-control" rows="2"><?= $esc('salary_adjustment_notes') ?></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="promotion_role_change">Promotion/Role Change</label>
+                        <input type="text" id="promotion_role_change" name="promotion_role_change" class="form-control" value="<?= $esc('promotion_role_change') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="bank_detail_update">Bank Detail Update</label>
+                        <input type="text" id="bank_detail_update" name="bank_detail_update" class="form-control" value="<?= $esc('bank_detail_update') ?>">
+                    </div>
+                    <div class="form-group declaration-box">
+                        <p class="declaration-text">I confirm that the above information is accurate and complete.</p>
+                        <label class="declaration-label">
+                            <input type="checkbox" name="declaration_accepted" value="1" <?= !empty($post['declaration_accepted']) ? 'checked' : '' ?> required>
+                            I agree
+                        </label>
+                    </div>
+                    <div class="step-buttons">
+                        <button type="button" class="btn btn-primary btn-prev" data-prev="6">Previous</button>
                         <button type="submit" class="btn btn-primary">Register</button>
                     </div>
                 </div>
@@ -169,7 +390,7 @@ $post = $_POST ?? [];
     (function() {
         var form = document.getElementById('register-form');
         var panels = form.querySelectorAll('.multistep-panel');
-        var dots = document.querySelectorAll('.step-dot');
+        var dots = form.closest('.multistep-card').querySelectorAll('.step-dot');
 
         function showStep(step) {
             step = parseInt(step, 10);
@@ -186,7 +407,7 @@ $post = $_POST ?? [];
         form.querySelectorAll('.btn-next').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var panel = this.closest('.multistep-panel');
-                var inputs = panel.querySelectorAll('input[required], select[required]');
+                var inputs = panel.querySelectorAll('input[required]:not([type=checkbox]), select[required]');
                 var valid = true;
                 inputs.forEach(function(inp) {
                     if (!inp.value.trim()) { valid = false; inp.reportValidity && inp.reportValidity(); }
