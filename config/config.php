@@ -20,8 +20,27 @@ define('DB_USER', 'sigsol_sigsolportal');
 define('DB_PASS', 'sigsol_sigsolportal');
 define('DB_CHARSET', 'utf8mb4');
 
-// Base URL - Update for your domain (no trailing slash)
-define('BASE_URL', 'https://yourdomain.com/staff-portal');
+// Base URL - Auto-detected from current request (no trailing slash)
+// Uses whatever domain and path the site is actually installed on
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
+    || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+$rootPath = str_replace('\\', '/', realpath(dirname(__DIR__)));
+$docRoot = str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT'] ?? $rootPath ?: getcwd()));
+if ($rootPath !== false && $docRoot !== false && str_starts_with($rootPath, $docRoot)) {
+    $basePath = trim(str_replace($docRoot, '', $rootPath), '/');
+} else {
+    // Fallback: walk up from SCRIPT_NAME to portal root (handles admin/, user/ subfolders)
+    $path = $_SERVER['SCRIPT_NAME'] ?? '';
+    while ($path && preg_match('#/(admin|user|database)(/|$)#', $path)) {
+        $path = dirname($path);
+    }
+    $basePath = trim($path ?: '', '/');
+}
+$basePath = $basePath !== '' ? '/' . $basePath : '';
+define('BASE_URL', $protocol . '://' . $host . $basePath);
 
 // Path constants
 define('ROOT_PATH', dirname(__DIR__));
