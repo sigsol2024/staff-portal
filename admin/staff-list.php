@@ -51,7 +51,7 @@ $staff_list = $stmt->fetchAll();
             <div class="page-header">
                 <h1>Staff List</h1>
                 <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                    <a href="<?= BASE_URL ?>/admin/export-pdf.php" class="btn btn-accent btn-sm" target="_blank">Download All (PDF)</a>
+                    <a href="<?= BASE_URL ?>/admin/export-pdf.php?download=1<?= $status_filter ? '&status=' . rawurlencode($status_filter) : '' ?>" class="btn btn-accent btn-sm" target="_blank">Download All (PDF)</a>
                     <a href="<?= BASE_URL ?>/admin/export-csv.php" class="btn btn-accent btn-sm">Download All (CSV)</a>
                     <a href="<?= BASE_URL ?>/admin/add-staff.php" class="btn btn-primary">Add Staff</a>
                 </div>

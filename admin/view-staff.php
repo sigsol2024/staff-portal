@@ -39,7 +39,7 @@ $profile_img = staff_profile_image($staff['profile_image']);
                 <h1>View Staff</h1>
                 <div style="display:flex;gap:0.5rem;">
                     <?php if ($staff['status'] === 'active'): ?>
-                        <a href="<?= BASE_URL ?>/admin/export-pdf.php?id=<?= $id ?>" class="btn btn-primary" target="_blank">Download PDF</a>
+                        <a href="<?= BASE_URL ?>/admin/export-pdf.php?id=<?= $id ?>&download=1" class="btn btn-primary" target="_blank">Download PDF</a>
                         <a href="<?= BASE_URL ?>/admin/export-csv.php?id=<?= $id ?>" class="btn btn-accent">Download CSV</a>
                     <?php endif; ?>
                     <a href="<?= BASE_URL ?>/admin/edit-staff.php?id=<?= $id ?>" class="btn btn-accent">Edit</a>
