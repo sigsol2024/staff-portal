@@ -51,8 +51,17 @@ $flash = get_flash();
                     <div>
                         <p><strong><?= esc($staff['full_name']) ?></strong></p>
                         <p><?= esc($staff['email']) ?></p>
+                        <?php if (!empty($staff['phone_number'])): ?>
+                        <p>Phone: <?= esc($staff['phone_number']) ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($staff['gender'])): ?>
+                        <p>Gender: <?= esc($staff['gender']) ?></p>
+                        <?php endif; ?>
                         <p>Position: <?= esc($staff['position'] ?? '-') ?></p>
                         <p>Date Joined: <?= format_date($staff['date_joined']) ?></p>
+                        <?php if (!empty($staff['address'])): ?>
+                        <p>Address: <?= esc($staff['address']) ?></p>
+                        <?php endif; ?>
                         <a href="<?= BASE_URL ?>/user/profile.php" class="btn btn-primary" style="margin-top: 1rem;">Edit Profile</a>
                     </div>
                 </div>

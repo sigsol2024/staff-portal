@@ -25,7 +25,8 @@ if ($id) {
 
 $fpdf_path = ROOT_PATH . '/lib/fpdf/fpdf.php';
 if (!file_exists($fpdf_path)) {
-    set_flash('error', 'PDF export requires FPDF. Download from https://www.fpdf.org/ and place fpdf.php in lib/fpdf/');
+    $install_url = BASE_URL . '/lib/fpdf/install_fpdf.php';
+    set_flash('error', 'PDF export requires FPDF. Visit ' . $install_url . ' to install, or manually download from https://www.fpdf.org/ and place fpdf.php in lib/fpdf/');
     header('Location: ' . BASE_URL . '/admin/staff-list.php');
     exit;
 }

@@ -59,12 +59,20 @@ $profile_img = staff_profile_image($staff['profile_image']);
                         <dl class="view-staff-meta">
                             <dt>Email</dt>
                             <dd><?= esc($staff['email']) ?></dd>
+                            <dt>Phone</dt>
+                            <dd><?= esc($staff['phone_number'] ?? '-') ?></dd>
+                            <dt>Gender</dt>
+                            <dd><?= esc($staff['gender'] ?? '-') ?></dd>
                             <dt>Position</dt>
                             <dd><?= esc($staff['position'] ?? '-') ?></dd>
                             <dt>Date of Birth</dt>
                             <dd><?= format_date($staff['date_of_birth']) ?></dd>
                             <dt>Date Joined</dt>
                             <dd><?= format_date($staff['date_joined']) ?></dd>
+                            <?php if (!empty($staff['address'])): ?>
+                            <dt>Address</dt>
+                            <dd><?= nl2br(esc($staff['address'])) ?></dd>
+                            <?php endif; ?>
                         </dl>
                         <?php if (!empty($staff['biography'])): ?>
                             <div class="view-staff-bio">

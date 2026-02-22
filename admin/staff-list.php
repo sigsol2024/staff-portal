@@ -50,7 +50,11 @@ $staff_list = $stmt->fetchAll();
         <main class="main-content">
             <div class="page-header">
                 <h1>Staff List</h1>
-                <a href="<?= BASE_URL ?>/admin/add-staff.php" class="btn btn-primary">Add Staff</a>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                    <a href="<?= BASE_URL ?>/admin/export-pdf.php" class="btn btn-accent btn-sm" target="_blank">Download All (PDF)</a>
+                    <a href="<?= BASE_URL ?>/admin/export-csv.php" class="btn btn-accent btn-sm">Download All (CSV)</a>
+                    <a href="<?= BASE_URL ?>/admin/add-staff.php" class="btn btn-primary">Add Staff</a>
+                </div>
             </div>
             <div class="search-bar">
                 <form method="GET" action="" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
@@ -93,30 +97,31 @@ $staff_list = $stmt->fetchAll();
                                         <td><span class="badge <?= status_badge_class($s['status']) ?>"><?= esc(ucfirst($s['status'])) ?></span></td>
                                         <td><?= format_date($s['date_joined']) ?></td>
                                         <td class="table-actions">
-                                            <a href="<?= BASE_URL ?>/admin/view-staff.php?id=<?= (int) $s['id'] ?>" class="btn btn-primary btn-sm">View</a>
-                                            <a href="<?= BASE_URL ?>/admin/edit-staff.php?id=<?= (int) $s['id'] ?>" class="btn btn-accent btn-sm">Edit</a>
-                                            <?php if ($s['status'] === 'active'): ?>
-                                                <form method="POST" action="<?= BASE_URL ?>/admin/suspend-staff.php" style="display:inline;" onsubmit="return confirm('Suspend this staff?');">
-                                                    <?= csrf_field() ?>
-                                                    <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
-                                                    <button type="submit" class="btn btn-danger btn-sm">Suspend</button>
-                                                </form>
-                                            <?php else: ?>
-                                                <form method="POST" action="<?= BASE_URL ?>/admin/activate-staff.php" style="display:inline;">
-                                                    <?= csrf_field() ?>
-                                                    <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
-                                                    <button type="submit" class="btn btn-primary btn-sm">Activate</button>
-                                                </form>
-                                            <?php endif; ?>
-                                            <?php if ($s['status'] === 'active'): ?>
-                                                <a href="<?= BASE_URL ?>/admin/export-pdf.php?id=<?= (int) $s['id'] ?>" class="btn btn-accent btn-sm" target="_blank">PDF</a>
-                                                <a href="<?= BASE_URL ?>/admin/export-csv.php?id=<?= (int) $s['id'] ?>" class="btn btn-accent btn-sm">CSV</a>
-                                            <?php endif; ?>
-                                            <form method="POST" action="<?= BASE_URL ?>/admin/delete-staff.php" style="display:inline;" onsubmit="return confirm('Delete this staff? Profile image will be removed.');">
-                                                <?= csrf_field() ?>
-                                                <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
-                                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                            </form>
+                                            <div class="dropdown-wrap">
+                                                <button type="button" class="btn btn-dropdown" aria-label="Actions" onclick="document.querySelectorAll('.dropdown-menu.open').forEach(function(m){if(m!==this.nextElementSibling)m.classList.remove('open');});this.nextElementSibling.classList.toggle('open');">&#8230;</button>
+                                                <div class="dropdown-menu">
+                                                    <a href="<?= BASE_URL ?>/admin/view-staff.php?id=<?= (int) $s['id'] ?>">View</a>
+                                                    <a href="<?= BASE_URL ?>/admin/edit-staff.php?id=<?= (int) $s['id'] ?>">Edit</a>
+                                                    <?php if ($s['status'] === 'active'): ?>
+                                                        <form method="POST" action="<?= BASE_URL ?>/admin/suspend-staff.php" onsubmit="return confirm('Suspend this staff?');">
+                                                            <?= csrf_field() ?>
+                                                            <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
+                                                            <button type="submit" class="dropdown-btn">Suspend</button>
+                                                        </form>
+                                                    <?php else: ?>
+                                                        <form method="POST" action="<?= BASE_URL ?>/admin/activate-staff.php">
+                                                            <?= csrf_field() ?>
+                                                            <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
+                                                            <button type="submit" class="dropdown-btn">Activate</button>
+                                                        </form>
+                                                    <?php endif; ?>
+                                                    <form method="POST" action="<?= BASE_URL ?>/admin/delete-staff.php" onsubmit="return confirm('Delete this staff? Profile image will be removed.');">
+                                                        <?= csrf_field() ?>
+                                                        <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
+                                                        <button type="submit" class="dropdown-btn dropdown-btn-danger">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -147,5 +152,6 @@ $staff_list = $stmt->fetchAll();
             </div>
         </main>
     </div>
+    <script src="<?= BASE_URL ?>/assets/js/script.js"></script>
 </body>
 </html>

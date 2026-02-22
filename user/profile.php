@@ -28,12 +28,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $full_name = trim($_POST['full_name'] ?? '');
             $date_of_birth = trim($_POST['date_of_birth'] ?? '') ?: null;
             $biography = trim($_POST['biography'] ?? '') ?: null;
+            $phone_number = trim($_POST['phone_number'] ?? '') ?: null;
+            $gender = trim($_POST['gender'] ?? '') ?: null;
+            $address = trim($_POST['address'] ?? '') ?: null;
 
             if (empty($full_name)) {
                 $error = 'Full name is required.';
             } else {
-                $stmt = $pdo->prepare("UPDATE staff SET full_name = ?, date_of_birth = ?, biography = ?, updated_at = NOW() WHERE id = ?");
-                $stmt->execute([$full_name, $date_of_birth, $biography, $staff['id']]);
+                $stmt = $pdo->prepare("UPDATE staff SET full_name = ?, date_of_birth = ?, biography = ?, phone_number = ?, gender = ?, address = ?, updated_at = NOW() WHERE id = ?");
+                $stmt->execute([$full_name, $date_of_birth, $biography, $phone_number, $gender, $address, $staff['id']]);
                 set_flash('success', 'Profile updated.');
                 header('Location: ' . BASE_URL . '/user/profile.php');
                 exit;
@@ -140,6 +143,24 @@ $flash = get_flash();
                         <label for="date_of_birth">Date of Birth</label>
                         <input type="date" id="date_of_birth" name="date_of_birth" class="form-control"
                                value="<?= esc($staff['date_of_birth'] ?? '') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" name="gender" class="form-control">
+                            <option value="">— Select —</option>
+                            <option value="Male" <?= ($staff['gender'] ?? '') === 'Male' ? 'selected' : '' ?>>Male</option>
+                            <option value="Female" <?= ($staff['gender'] ?? '') === 'Female' ? 'selected' : '' ?>>Female</option>
+                            <option value="Other" <?= ($staff['gender'] ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone_number">Phone Number</label>
+                        <input type="tel" id="phone_number" name="phone_number" class="form-control"
+                               value="<?= esc($staff['phone_number'] ?? '') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <textarea id="address" name="address" class="form-control" rows="3"><?= esc($staff['address'] ?? '') ?></textarea>
                     </div>
                     <div class="form-group">
                         <label for="biography">Biography</label>

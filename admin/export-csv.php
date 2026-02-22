@@ -34,17 +34,20 @@ header('Pragma: no-cache');
 header('Expires: 0');
 
 $out = fopen('php://output', 'w');
-fputcsv($out, ['ID', 'Full Name', 'Email', 'Position', 'Date of Birth', 'Date Joined', 'Status', 'Biography']);
+fputcsv($out, ['ID', 'Full Name', 'Email', 'Phone', 'Gender', 'Position', 'Date of Birth', 'Date Joined', 'Status', 'Address', 'Biography']);
 
 foreach ($rows as $row) {
     fputcsv($out, [
         $row['id'],
         $row['full_name'],
         $row['email'],
+        $row['phone_number'] ?? '',
+        $row['gender'] ?? '',
         $row['position'] ?? '',
         $row['date_of_birth'] ?? '',
         $row['date_joined'] ?? '',
         $row['status'],
+        $row['address'] ?? '',
         $row['biography'] ?? '',
     ]);
 }

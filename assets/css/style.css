@@ -74,6 +74,73 @@ a:hover {
   margin: 0 0.5rem;
 }
 
+/* Multi-step form */
+.multistep-card {
+  max-width: 480px;
+}
+
+.multistep-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1.5rem;
+}
+
+.step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gray);
+  color: var(--gray-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.step-dot.active {
+  background: var(--primary);
+  color: var(--bg);
+}
+
+.step-dot.done {
+  background: var(--accent);
+  color: var(--primary);
+}
+
+.step-line {
+  width: 40px;
+  height: 3px;
+  background: var(--gray);
+}
+
+.multistep-panel {
+  display: none;
+}
+
+.multistep-panel.active {
+  display: block;
+}
+
+.step-title {
+  font-size: 1rem;
+  margin: 0 0 1rem 0;
+  color: var(--gray-dark);
+}
+
+.step-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.step-buttons .btn {
+  flex: 1;
+}
+
 /* Layout - Admin/Staff with sidebar */
 .app-layout {
   display: flex;
@@ -354,6 +421,80 @@ a:hover {
   flex-wrap: wrap;
 }
 
+/* 3-dots dropdown for actions */
+.dropdown-wrap {
+  position: relative;
+}
+
+.btn-dropdown {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--gray);
+  border-radius: var(--radius);
+  background: var(--bg);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.btn-dropdown:hover {
+  background: var(--gray);
+  border-color: var(--primary);
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.25rem;
+  min-width: 140px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hover);
+  padding: 0.5rem 0;
+  z-index: 100;
+  border: 1px solid var(--gray);
+}
+
+.dropdown-menu.open {
+  display: block;
+}
+
+.dropdown-menu a,
+.dropdown-menu .dropdown-btn {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--primary);
+  text-decoration: none;
+  transition: background var(--transition);
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu .dropdown-btn:hover {
+  background: var(--gray);
+}
+
+.dropdown-menu .dropdown-btn-danger {
+  color: var(--danger);
+}
+
+.dropdown-menu form {
+  margin: 0;
+}
+
 /* Profile image */
 .profile-img {
   width: 48px;
@@ -443,6 +584,10 @@ a:hover {
 .view-staff-bio p {
   margin: 0;
   line-height: 1.5;
+}
+
+.edit-staff-image-form {
+  margin-top: 0.5rem;
 }
 
 /* Flash messages */

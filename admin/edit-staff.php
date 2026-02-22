@@ -37,6 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $date_joined = trim($_POST['date_joined'] ?? '') ?: null;
             $position = trim($_POST['position'] ?? '') ?: null;
             $biography = trim($_POST['biography'] ?? '') ?: null;
+            $phone_number = trim($_POST['phone_number'] ?? '') ?: null;
+            $gender = trim($_POST['gender'] ?? '') ?: null;
+            $address = trim($_POST['address'] ?? '') ?: null;
             $status = ($_POST['status'] ?? 'active') === 'suspended' ? 'suspended' : 'active';
 
             if (empty($email) || empty($full_name)) {
@@ -50,10 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Email already in use.';
                 } else {
                     $stmt = $pdo->prepare("
-                        UPDATE staff SET email = ?, full_name = ?, date_of_birth = ?, date_joined = ?, position = ?, biography = ?, status = ?, updated_at = NOW()
+                        UPDATE staff SET email = ?, full_name = ?, date_of_birth = ?, date_joined = ?, position = ?, biography = ?, phone_number = ?, gender = ?, address = ?, status = ?, updated_at = NOW()
                         WHERE id = ?
                     ");
-                    $stmt->execute([$email, $full_name, $date_of_birth, $date_joined, $position, $biography, $status, $id]);
+                    $stmt->execute([$email, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address, $status, $id]);
                     set_flash('success', 'Staff updated.');
                     header('Location: ' . BASE_URL . '/admin/view-staff.php?id=' . $id);
                     exit;
@@ -117,18 +120,23 @@ $flash = get_flash();
                 <div class="alert alert-error"><?= esc($error) ?></div>
             <?php endif; ?>
 
-            <div class="card">
-                <div class="card-header">
-                    <h2>Profile Image</h2>
-                </div>
-                <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
-                    <img src="<?= esc($profile_img) ?>" alt="Profile" class="profile-img-lg">
-                    <form method="POST" enctype="multipart/form-data">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="action" value="image">
-                        <input type="file" name="profile_image" accept="image/jpeg,image/jpg,image/png" required>
-                        <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Upload</button>
-                    </form>
+            <div class="card edit-staff-card">
+                <div class="view-staff-profile">
+                    <div class="view-staff-avatar-wrap">
+                        <img src="<?= esc($profile_img) ?>" alt="Profile" class="profile-img-lg">
+                        <form method="POST" enctype="multipart/form-data" class="edit-staff-image-form">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="action" value="image">
+                            <input type="file" name="profile_image" accept="image/jpeg,image/jpg,image/png" required class="form-control" style="margin-top:0.75rem;max-width:200px;">
+                            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Upload</button>
+                        </form>
+                    </div>
+                    <div class="view-staff-details" style="flex:1;">
+                        <div class="view-staff-header">
+                            <h2 class="view-staff-name"><?= esc($staff['full_name']) ?></h2>
+                            <span class="badge <?= status_badge_class($staff['status']) ?>"><?= esc(ucfirst($staff['status'])) ?></span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -160,9 +168,27 @@ $flash = get_flash();
                                value="<?= esc($staff['date_joined'] ?? '') ?>">
                     </div>
                     <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" name="gender" class="form-control">
+                            <option value="">— Select —</option>
+                            <option value="Male" <?= ($staff['gender'] ?? '') === 'Male' ? 'selected' : '' ?>>Male</option>
+                            <option value="Female" <?= ($staff['gender'] ?? '') === 'Female' ? 'selected' : '' ?>>Female</option>
+                            <option value="Other" <?= ($staff['gender'] ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone_number">Phone Number</label>
+                        <input type="tel" id="phone_number" name="phone_number" class="form-control"
+                               value="<?= esc($staff['phone_number'] ?? '') ?>">
+                    </div>
+                    <div class="form-group">
                         <label for="position">Position</label>
                         <input type="text" id="position" name="position" class="form-control"
                                value="<?= esc($staff['position'] ?? '') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <textarea id="address" name="address" class="form-control" rows="3"><?= esc($staff['address'] ?? '') ?></textarea>
                     </div>
                     <div class="form-group">
                         <label for="biography">Biography</label>

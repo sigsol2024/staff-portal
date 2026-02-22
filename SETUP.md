@@ -25,6 +25,8 @@ Upload the entire `staff-portal` folder to your web root. For example:
 4. Choose `database/staff_portal.sql`
 5. Click **Go** to import
 
+**If you already have the database and only need to add new columns** (e.g. address, gender, phone): open the **SQL** tab in phpMyAdmin, paste the contents of `database/migrations/001_add_staff_address_gender_phone.sql`, and run it once.
+
 ### 4. Configure config.php
 
 Edit `config/config.php` and update:
@@ -59,10 +61,9 @@ define('BASE_URL', 'https://yourdomain.com/staff-portal'); // Your site URL (no 
 
 For PDF export functionality:
 
-1. Download FPDF from https://www.fpdf.org/ (single file: fpdf.php)
-2. Create folder: `lib/fpdf/`
-3. Place `fpdf.php` inside `lib/fpdf/`
-4. The export will work when FPDF is present
+**Option A (auto-install):** Visit `https://yourdomain.com/staff-portal/lib/fpdf/install_fpdf.php` in your browser. It will download and install FPDF. Delete the install file afterward.
+
+**Option B (manual):** Download FPDF from https://www.fpdf.org/ (single file: fpdf.php), create folder `lib/fpdf/`, and place `fpdf.php` inside.
 
 ### 8. First Login
 

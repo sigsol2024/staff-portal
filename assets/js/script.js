@@ -12,4 +12,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown-wrap')) {
+            document.querySelectorAll('.dropdown-menu.open').forEach(function(m) {
+                m.classList.remove('open');
+            });
+        }
+    });
 });

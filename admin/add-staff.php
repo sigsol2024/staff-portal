@@ -18,6 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $date_joined = trim($_POST['date_joined'] ?? '') ?: null;
         $position = trim($_POST['position'] ?? '') ?: null;
         $biography = trim($_POST['biography'] ?? '') ?: null;
+        $phone_number = trim($_POST['phone_number'] ?? '') ?: null;
+        $gender = trim($_POST['gender'] ?? '') ?: null;
+        $address = trim($_POST['address'] ?? '') ?: null;
         $password = $_POST['password'] ?? '';
         $status = ($_POST['status'] ?? 'active') === 'suspended' ? 'suspended' : 'active';
 
@@ -35,11 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
                 $stmt = $pdo->prepare("
-                    INSERT INTO staff (email, password, full_name, date_of_birth, date_joined, position, biography, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO staff (email, password, full_name, date_of_birth, date_joined, position, biography, phone_number, gender, address, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 try {
-                    $stmt->execute([$email, $hash, $full_name, $date_of_birth, $date_joined, $position, $biography, $status]);
+                    $stmt->execute([$email, $hash, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address, $status]);
                     $staff_id = (int) $pdo->lastInsertId();
                     $stmt = $pdo->prepare("INSERT INTO activity_logs (admin_id, action, staff_id) VALUES (?, ?, ?)");
                     $stmt->execute([current_admin_id(), 'add_staff', $staff_id]);
@@ -101,9 +104,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                value="<?= esc($_POST['date_joined'] ?? '') ?>">
                     </div>
                     <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" name="gender" class="form-control">
+                            <option value="">— Select —</option>
+                            <option value="Male" <?= ($_POST['gender'] ?? '') === 'Male' ? 'selected' : '' ?>>Male</option>
+                            <option value="Female" <?= ($_POST['gender'] ?? '') === 'Female' ? 'selected' : '' ?>>Female</option>
+                            <option value="Other" <?= ($_POST['gender'] ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone_number">Phone Number</label>
+                        <input type="tel" id="phone_number" name="phone_number" class="form-control"
+                               value="<?= esc($_POST['phone_number'] ?? '') ?>">
+                    </div>
+                    <div class="form-group">
                         <label for="position">Position</label>
                         <input type="text" id="position" name="position" class="form-control"
                                value="<?= esc($_POST['position'] ?? '') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <textarea id="address" name="address" class="form-control" rows="3"><?= esc($_POST['address'] ?? '') ?></textarea>
                     </div>
                     <div class="form-group">
                         <label for="biography">Biography</label>
