@@ -52,15 +52,6 @@ $staff_list = $stmt->fetchAll();
                 <h1>Staff List</h1>
                 <a href="<?= BASE_URL ?>/admin/add-staff.php" class="btn btn-primary">Add Staff</a>
             </div>
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;">
-                <span style="font-weight:600;">Bulk Export:</span>
-                <a href="<?= BASE_URL ?>/admin/export-pdf.php" class="btn btn-accent btn-sm" target="_blank">All PDF</a>
-                <a href="<?= BASE_URL ?>/admin/export-csv.php" class="btn btn-accent btn-sm">All CSV</a>
-                <a href="<?= BASE_URL ?>/admin/export-pdf.php?status=active" class="btn btn-accent btn-sm" target="_blank">Active PDF</a>
-                <a href="<?= BASE_URL ?>/admin/export-pdf.php?status=suspended" class="btn btn-accent btn-sm" target="_blank">Suspended PDF</a>
-                <a href="<?= BASE_URL ?>/admin/export-csv.php?status=active" class="btn btn-accent btn-sm">Active CSV</a>
-                <a href="<?= BASE_URL ?>/admin/export-csv.php?status=suspended" class="btn btn-accent btn-sm">Suspended CSV</a>
-            </div>
             <div class="search-bar">
                 <form method="GET" action="" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
                     <input type="text" name="search" class="form-control" placeholder="Search name, email, position..."
@@ -117,8 +108,10 @@ $staff_list = $stmt->fetchAll();
                                                     <button type="submit" class="btn btn-primary btn-sm">Activate</button>
                                                 </form>
                                             <?php endif; ?>
-                                            <a href="<?= BASE_URL ?>/admin/export-pdf.php?id=<?= (int) $s['id'] ?>" class="btn btn-accent btn-sm" target="_blank">PDF</a>
-                                            <a href="<?= BASE_URL ?>/admin/export-csv.php?id=<?= (int) $s['id'] ?>" class="btn btn-accent btn-sm">CSV</a>
+                                            <?php if ($s['status'] === 'active'): ?>
+                                                <a href="<?= BASE_URL ?>/admin/export-pdf.php?id=<?= (int) $s['id'] ?>" class="btn btn-accent btn-sm" target="_blank">PDF</a>
+                                                <a href="<?= BASE_URL ?>/admin/export-csv.php?id=<?= (int) $s['id'] ?>" class="btn btn-accent btn-sm">CSV</a>
+                                            <?php endif; ?>
                                             <form method="POST" action="<?= BASE_URL ?>/admin/delete-staff.php" style="display:inline;" onsubmit="return confirm('Delete this staff? Profile image will be removed.');">
                                                 <?= csrf_field() ?>
                                                 <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">

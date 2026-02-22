@@ -38,8 +38,10 @@ $profile_img = staff_profile_image($staff['profile_image']);
             <div class="page-header">
                 <h1>View Staff</h1>
                 <div style="display:flex;gap:0.5rem;">
-                    <a href="<?= BASE_URL ?>/admin/export-pdf.php?id=<?= $id ?>" class="btn btn-primary" target="_blank">Download PDF</a>
-                    <a href="<?= BASE_URL ?>/admin/export-csv.php?id=<?= $id ?>" class="btn btn-accent">Download CSV</a>
+                    <?php if ($staff['status'] === 'active'): ?>
+                        <a href="<?= BASE_URL ?>/admin/export-pdf.php?id=<?= $id ?>" class="btn btn-primary" target="_blank">Download PDF</a>
+                        <a href="<?= BASE_URL ?>/admin/export-csv.php?id=<?= $id ?>" class="btn btn-accent">Download CSV</a>
+                    <?php endif; ?>
                     <a href="<?= BASE_URL ?>/admin/edit-staff.php?id=<?= $id ?>" class="btn btn-accent">Edit</a>
                     <a href="<?= BASE_URL ?>/admin/staff-list.php" class="btn btn-primary">Back to List</a>
                 </div>

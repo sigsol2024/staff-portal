@@ -5,7 +5,7 @@
 
 :root {
   --primary: #0A1F44;
-  --accent: #A6F05B;
+  --accent: #86c93e;
   --bg: #FFFFFF;
   --danger: #E63946;
   --success: #2ECC71;
@@ -116,6 +116,15 @@ a:hover {
 .sidebar-nav a.active {
   background: var(--accent);
   color: var(--primary);
+}
+
+.sidebar-nav a.sidebar-logout {
+  color: var(--danger);
+}
+
+.sidebar-nav a.sidebar-logout:hover {
+  background: rgba(230, 57, 70, 0.2);
+  color: var(--danger);
 }
 
 .main-content {
@@ -333,7 +342,7 @@ a:hover {
 }
 
 .table tr:hover td {
-  background: rgba(166, 240, 91, 0.05);
+  background: rgba(134, 201, 62, 0.05);
 }
 
 .table-actions {
