@@ -46,21 +46,31 @@ $profile_img = staff_profile_image($staff['profile_image']);
                     <a href="<?= BASE_URL ?>/admin/staff-list.php" class="btn btn-primary">Back to List</a>
                 </div>
             </div>
-            <div class="card">
-                <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:flex-start;">
-                    <img src="<?= esc($profile_img) ?>" alt="Profile" class="profile-img-lg">
-                    <div style="flex:1;">
-                        <h2><?= esc($staff['full_name']) ?></h2>
-                        <span class="badge <?= status_badge_class($staff['status']) ?>"><?= esc(ucfirst($staff['status'])) ?></span>
-                        <table class="table" style="margin-top:1rem;width:auto;">
-                            <tr><th>Email</th><td><?= esc($staff['email']) ?></td></tr>
-                            <tr><th>Position</th><td><?= esc($staff['position'] ?? '-') ?></td></tr>
-                            <tr><th>Date of Birth</th><td><?= format_date($staff['date_of_birth']) ?></td></tr>
-                            <tr><th>Date Joined</th><td><?= format_date($staff['date_joined']) ?></td></tr>
-                        </table>
+            <div class="card view-staff-card">
+                <div class="view-staff-profile">
+                    <div class="view-staff-avatar-wrap">
+                        <img src="<?= esc($profile_img) ?>" alt="Profile" class="profile-img-lg">
+                    </div>
+                    <div class="view-staff-details">
+                        <div class="view-staff-header">
+                            <h2 class="view-staff-name"><?= esc($staff['full_name']) ?></h2>
+                            <span class="badge <?= status_badge_class($staff['status']) ?>"><?= esc(ucfirst($staff['status'])) ?></span>
+                        </div>
+                        <dl class="view-staff-meta">
+                            <dt>Email</dt>
+                            <dd><?= esc($staff['email']) ?></dd>
+                            <dt>Position</dt>
+                            <dd><?= esc($staff['position'] ?? '-') ?></dd>
+                            <dt>Date of Birth</dt>
+                            <dd><?= format_date($staff['date_of_birth']) ?></dd>
+                            <dt>Date Joined</dt>
+                            <dd><?= format_date($staff['date_joined']) ?></dd>
+                        </dl>
                         <?php if (!empty($staff['biography'])): ?>
-                            <h3 style="margin-top:1rem;">Biography</h3>
-                            <p><?= nl2br(esc($staff['biography'])) ?></p>
+                            <div class="view-staff-bio">
+                                <h3>Biography</h3>
+                                <p><?= nl2br(esc($staff['biography'])) ?></p>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>

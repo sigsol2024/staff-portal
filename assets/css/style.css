@@ -369,6 +369,82 @@ a:hover {
   object-fit: cover;
 }
 
+/* View Staff page - aligned profile layout */
+.view-staff-card {
+  padding: 1.75rem;
+}
+
+.view-staff-profile {
+  display: flex;
+  gap: 1.75rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.view-staff-avatar-wrap {
+  flex-shrink: 0;
+}
+
+.view-staff-avatar-wrap .profile-img-lg {
+  display: block;
+  width: 120px;
+  height: 120px;
+}
+
+.view-staff-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.view-staff-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.view-staff-name {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.view-staff-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1.5rem;
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+}
+
+.view-staff-meta dt {
+  margin: 0;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.view-staff-meta dd {
+  margin: 0;
+  color: var(--gray-dark);
+}
+
+.view-staff-bio {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--gray);
+}
+
+.view-staff-bio h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.view-staff-bio p {
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* Flash messages */
 .alert {
   padding: 1rem 1.25rem;
