@@ -57,12 +57,12 @@ define('TOKEN_EXPIRY_HOURS', 1);
 
 // SMTP / Mail (PHPMailer)
 define('MAIL_ENABLED', true);  // Set false to disable sending (e.g. dev)
-define('SMTP_HOST', 'smtp.example.com');       // e.g. smtp.gmail.com, mail.yourdomain.com
-define('SMTP_PORT', 587);                        // 587 for TLS, 465 for SSL, 25 for plain
-define('SMTP_ENCRYPTION', 'tls');               // 'tls', 'ssl', or ''
-define('SMTP_USERNAME', '');                     // SMTP auth username (often same as from address)
+define('SMTP_HOST', 'server1.signaturewebhosting.space');       // e.g. smtp.gmail.com, mail.yourdomain.com
+define('SMTP_PORT', 465);                        // 587 for TLS, 465 for SSL, 25 for plain
+define('SMTP_ENCRYPTION', 'ssl');               // 'tls', 'ssl', or ''
+define('SMTP_USERNAME', 'portal@signature-solutions.com');                     // SMTP auth username (often same as from address)
 define('SMTP_PASSWORD', '');                     // SMTP auth password or app password
-define('MAIL_FROM_ADDRESS', 'noreply@example.com');
+define('MAIL_FROM_ADDRESS', 'portal@signature-solutions.com');
 define('MAIL_FROM_NAME', 'Staff Portal');
 define('OTP_EXPIRY_MINUTES', 10);                // 6-digit OTP and verification code validity
 
