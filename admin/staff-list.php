@@ -98,7 +98,7 @@ $staff_list = $stmt->fetchAll();
                                         <td><?= format_date($s['date_joined']) ?></td>
                                         <td class="table-actions">
                                             <div class="dropdown-wrap">
-                                                <button type="button" class="btn btn-dropdown" aria-label="Actions" onclick="document.querySelectorAll('.dropdown-menu.open').forEach(function(m){if(m!==this.nextElementSibling)m.classList.remove('open');});this.nextElementSibling.classList.toggle('open');">&#8230;</button>
+                                                <button type="button" class="btn btn-dropdown" aria-label="Actions" onclick="var m=this.nextElementSibling; document.querySelectorAll('.dropdown-menu.open').forEach(function(x){if(x!==m)x.classList.remove('open');}); m.classList.toggle('open'); if(m.classList.contains('open')){var r=this.getBoundingClientRect(); m.style.top=(r.bottom+4)+'px'; m.style.left=Math.max(8,Math.min(r.right-140,r.left))+'px';}">&#8230;</button>
                                                 <div class="dropdown-menu">
                                                     <a href="<?= BASE_URL ?>/admin/view-staff.php?id=<?= (int) $s['id'] ?>">View</a>
                                                     <a href="<?= BASE_URL ?>/admin/edit-staff.php?id=<?= (int) $s['id'] ?>">Edit</a>

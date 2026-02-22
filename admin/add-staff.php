@@ -3,6 +3,7 @@ define('STAFF_PORTAL', true);
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/upload.php';
 
 require_admin_login();
 
@@ -24,13 +25,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = $_POST['password'] ?? '';
         $status = ($_POST['status'] ?? 'active') === 'suspended' ? 'suspended' : 'active';
 
-        if (empty($email) || empty($full_name) || empty($password)) {
+        $profile_image = null;
+        if (!empty($_FILES['profile_image']['name'])) {
+            $profile_image = handle_profile_upload($_FILES['profile_image']);
+            if ($profile_image === false) {
+                $error = 'Invalid profile image. Use JPG or PNG, max 2MB. Ensure uploads/profile_images/ is writable.';
+            }
+        }
+
+        if (!$error && (empty($email) || empty($full_name) || empty($password))) {
             $error = 'Email, full name and password are required.';
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        } elseif (!$error && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'Invalid email address.';
-        } elseif (strlen($password) < PASSWORD_MIN_LENGTH) {
+        } elseif (!$error && strlen($password) < PASSWORD_MIN_LENGTH) {
             $error = 'Password must be at least ' . PASSWORD_MIN_LENGTH . ' characters.';
-        } else {
+        } elseif (!$error) {
             $stmt = $pdo->prepare("SELECT id FROM staff WHERE email = ?");
             $stmt->execute([$email]);
             if ($stmt->fetch()) {
@@ -38,11 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
                 $stmt = $pdo->prepare("
-                    INSERT INTO staff (email, password, full_name, date_of_birth, date_joined, position, biography, phone_number, gender, address, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO staff (email, password, full_name, date_of_birth, date_joined, position, biography, phone_number, gender, address, profile_image, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 try {
-                    $stmt->execute([$email, $hash, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address, $status]);
+                    $stmt->execute([$email, $hash, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address, $profile_image, $status]);
                     $staff_id = (int) $pdo->lastInsertId();
                     $stmt = $pdo->prepare("INSERT INTO activity_logs (admin_id, action, staff_id) VALUES (?, ?, ?)");
                     $stmt->execute([current_admin_id(), 'add_staff', $staff_id]);
@@ -77,8 +86,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="alert alert-error"><?= esc($error) ?></div>
             <?php endif; ?>
             <div class="card">
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
                     <?= csrf_field() ?>
+                    <div class="form-group add-staff-avatar-row">
+                        <label>Profile picture</label>
+                        <div class="add-staff-avatar-wrap">
+                            <img id="add-staff-preview" src="<?= BASE_URL ?>/assets/images/placeholder.svg" alt="Preview" class="profile-img-lg add-staff-preview-img">
+                            <div class="add-staff-avatar-upload">
+                                <input type="file" id="add_staff_profile_image" name="profile_image" accept="image/jpeg,image/jpg,image/png" class="form-control">
+                                <span class="form-hint">JPG or PNG, max 2MB</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label for="email">Email *</label>
                         <input type="email" id="email" name="email" class="form-control" required
@@ -142,5 +161,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </main>
     </div>
+    <script>
+        (function(){
+            var inp = document.getElementById('add_staff_profile_image');
+            var img = document.getElementById('add-staff-preview');
+            if (inp && img) inp.addEventListener('change', function(){
+                var f = this.files[0];
+                if (f && f.type.match(/^image\/(jpeg|jpg|png)$/)) {
+                    var r = new FileReader();
+                    r.onload = function(){ img.src = r.result; };
+                    r.readAsDataURL(f);
+                } else if (!f) img.src = '<?= addslashes(BASE_URL) ?>/assets/images/placeholder.svg';
+            });
+        })();
+    </script>
 </body>
 </html>

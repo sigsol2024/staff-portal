@@ -117,8 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="auth-links">
                 <?php if ($isStaff): ?>
                     <a href="<?= BASE_URL ?>/register.php">Register</a> |
-                    <a href="<?= BASE_URL ?>/forgot-password.php">Forgot Password</a> |
-                    <a href="<?= BASE_URL ?>/admin/login.php">Admin Login</a>
+                    <a href="<?= BASE_URL ?>/forgot-password.php">Forgot Password</a>
                 <?php else: ?>
                     <a href="<?= BASE_URL ?>/login.php?type=staff">Staff Login</a> |
                     <a href="<?= BASE_URL ?>/admin/register.php">Create Admin Account</a>

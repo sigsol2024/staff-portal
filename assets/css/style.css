@@ -369,6 +369,10 @@ a:hover {
   margin-top: 0.25rem;
 }
 
+label .required {
+  color: var(--danger);
+}
+
 /* Status badges */
 .badge {
   display: inline-block;
@@ -449,16 +453,13 @@ a:hover {
 
 .dropdown-menu {
   display: none;
-  position: absolute;
-  right: 0;
-  top: 100%;
-  margin-top: 0.25rem;
+  position: fixed;
   min-width: 140px;
   background: var(--bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow-hover);
   padding: 0.5rem 0;
-  z-index: 100;
+  z-index: 9999;
   border: 1px solid var(--gray);
 }
 
@@ -590,6 +591,137 @@ a:hover {
   margin-top: 0.5rem;
 }
 
+/* Edit Staff page - improved layout */
+.edit-staff-hero {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  padding: 1.5rem 0;
+}
+
+.edit-staff-hero .edit-staff-avatar-wrap {
+  flex-shrink: 0;
+}
+
+.edit-staff-hero .profile-img-lg {
+  width: 140px;
+  height: 140px;
+  display: block;
+  border-radius: var(--radius);
+  object-fit: cover;
+  border: 3px solid var(--gray);
+}
+
+.edit-staff-image-form {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray);
+}
+
+.edit-staff-image-form .form-control {
+  font-size: 0.85rem;
+  padding: 0.5rem;
+  max-width: 100%;
+}
+
+.edit-staff-image-form .btn {
+  margin-top: 0.5rem;
+}
+
+/* Add Staff - profile picture with preview */
+.add-staff-avatar-row {
+  margin-bottom: 1.25rem;
+}
+
+.add-staff-avatar-wrap {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.add-staff-preview-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 2px solid var(--gray);
+  flex-shrink: 0;
+}
+
+.add-staff-avatar-upload {
+  flex: 1;
+  min-width: 180px;
+}
+
+.add-staff-avatar-upload .form-control {
+  padding: 0.5rem;
+}
+
+.edit-staff-hero-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.edit-staff-hero-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.edit-staff-hero-name {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.edit-staff-hero-meta {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--gray-dark);
+}
+
+.edit-staff-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .edit-staff-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .edit-staff-form-grid .form-group-full {
+    grid-column: 1 / -1;
+  }
+}
+
+.edit-staff-form-actions {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--gray);
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.edit-staff-password-card .card-header {
+  margin-bottom: 0.75rem;
+}
+
+.edit-staff-password-card .form-group {
+  margin-bottom: 0.75rem;
+}
+
+.edit-staff-password-card .btn {
+  margin-top: 0.25rem;
+}
+
 /* Flash messages */
 .alert {
   padding: 1rem 1.25rem;
@@ -617,6 +749,12 @@ a:hover {
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
   gap: 1rem;
+}
+
+.page-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .page-header h1 {

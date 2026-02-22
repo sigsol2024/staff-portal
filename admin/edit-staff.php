@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header('Location: ' . BASE_URL . '/admin/edit-staff.php?id=' . $id);
                     exit;
                 }
-                $error = 'Invalid image. Use JPG or PNG, max 2MB.';
+                $error = 'Invalid image. Use JPG or PNG, max 2MB. Ensure uploads/profile_images/ is writable.';
             }
         } elseif ($action === 'password') {
             $password = $_POST['new_password'] ?? '';
@@ -110,8 +110,10 @@ $flash = get_flash();
         <main class="main-content">
             <div class="page-header">
                 <h1>Edit Staff</h1>
-                <a href="<?= BASE_URL ?>/admin/view-staff.php?id=<?= $id ?>" class="btn btn-primary">View</a>
-                <a href="<?= BASE_URL ?>/admin/staff-list.php" class="btn btn-primary">Back to List</a>
+                <div class="page-header-actions">
+                    <a href="<?= BASE_URL ?>/admin/view-staff.php?id=<?= $id ?>" class="btn btn-primary">View profile</a>
+                    <a href="<?= BASE_URL ?>/admin/staff-list.php" class="btn btn-accent">Back to list</a>
+                </div>
             </div>
             <?php if ($flash): ?>
                 <div class="alert alert-<?= $flash['type'] === 'success' ? 'success' : 'error' ?>"><?= esc($flash['message']) ?></div>
@@ -120,106 +122,131 @@ $flash = get_flash();
                 <div class="alert alert-error"><?= esc($error) ?></div>
             <?php endif; ?>
 
-            <div class="card edit-staff-card">
-                <div class="view-staff-profile">
-                    <div class="view-staff-avatar-wrap">
-                        <img src="<?= esc($profile_img) ?>" alt="Profile" class="profile-img-lg">
+            <div class="card">
+                <div class="edit-staff-hero">
+                    <div class="edit-staff-avatar-wrap">
+                        <img id="edit-staff-preview" src="<?= esc($profile_img) ?>" alt="<?= esc($staff['full_name']) ?>" class="profile-img-lg">
                         <form method="POST" enctype="multipart/form-data" class="edit-staff-image-form">
                             <?= csrf_field() ?>
                             <input type="hidden" name="action" value="image">
-                            <input type="file" name="profile_image" accept="image/jpeg,image/jpg,image/png" required class="form-control" style="margin-top:0.75rem;max-width:200px;">
-                            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Upload</button>
+                            <div class="form-group">
+                                <label for="profile_image">New photo</label>
+                                <input type="file" id="profile_image" name="profile_image" accept="image/jpeg,image/jpg,image/png" required class="form-control">
+                                <span class="form-hint">JPG or PNG, max 2MB. Preview updates when you select a file.</span>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Upload</button>
                         </form>
                     </div>
-                    <div class="view-staff-details" style="flex:1;">
-                        <div class="view-staff-header">
-                            <h2 class="view-staff-name"><?= esc($staff['full_name']) ?></h2>
+                    <div class="edit-staff-hero-details">
+                        <div class="edit-staff-hero-title">
+                            <h2 class="edit-staff-hero-name"><?= esc($staff['full_name']) ?></h2>
                             <span class="badge <?= status_badge_class($staff['status']) ?>"><?= esc(ucfirst($staff['status'])) ?></span>
                         </div>
+                        <p class="edit-staff-hero-meta"><?= esc($staff['email']) ?> · <?= esc($staff['position'] ?? '—') ?></p>
                     </div>
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-header">
-                    <h2>Profile Details</h2>
+                    <h2>Profile details</h2>
                 </div>
                 <form method="POST">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="profile">
-                    <div class="form-group">
-                        <label for="email">Email *</label>
-                        <input type="email" id="email" name="email" class="form-control" required
-                               value="<?= esc($staff['email']) ?>">
+                    <div class="edit-staff-form-grid">
+                        <div class="form-group">
+                            <label for="email">Email <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" class="form-control" required
+                                   value="<?= esc($staff['email']) ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="full_name">Full name <span class="required">*</span></label>
+                            <input type="text" id="full_name" name="full_name" class="form-control" required
+                                   value="<?= esc($staff['full_name']) ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="date_of_birth">Date of birth</label>
+                            <input type="date" id="date_of_birth" name="date_of_birth" class="form-control"
+                                   value="<?= esc($staff['date_of_birth'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="date_joined">Date joined</label>
+                            <input type="date" id="date_joined" name="date_joined" class="form-control"
+                                   value="<?= esc($staff['date_joined'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Gender</label>
+                            <select id="gender" name="gender" class="form-control">
+                                <option value="">— Select —</option>
+                                <option value="Male" <?= ($staff['gender'] ?? '') === 'Male' ? 'selected' : '' ?>>Male</option>
+                                <option value="Female" <?= ($staff['gender'] ?? '') === 'Female' ? 'selected' : '' ?>>Female</option>
+                                <option value="Other" <?= ($staff['gender'] ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone_number">Phone number</label>
+                            <input type="tel" id="phone_number" name="phone_number" class="form-control"
+                                   value="<?= esc($staff['phone_number'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="position">Position</label>
+                            <input type="text" id="position" name="position" class="form-control"
+                                   value="<?= esc($staff['position'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <select id="status" name="status" class="form-control">
+                                <option value="active" <?= $staff['status'] === 'active' ? 'selected' : '' ?>>Active</option>
+                                <option value="suspended" <?= $staff['status'] === 'suspended' ? 'selected' : '' ?>>Suspended</option>
+                            </select>
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="address">Address</label>
+                            <textarea id="address" name="address" class="form-control" rows="3" placeholder="Street, city, country"><?= esc($staff['address'] ?? '') ?></textarea>
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="biography">Biography</label>
+                            <textarea id="biography" name="biography" class="form-control" rows="4" placeholder="Short bio or role description"><?= esc($staff['biography'] ?? '') ?></textarea>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="full_name">Full Name *</label>
-                        <input type="text" id="full_name" name="full_name" class="form-control" required
-                               value="<?= esc($staff['full_name']) ?>">
+                    <div class="edit-staff-form-actions">
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <a href="<?= BASE_URL ?>/admin/view-staff.php?id=<?= $id ?>" class="btn btn-accent">Cancel</a>
                     </div>
-                    <div class="form-group">
-                        <label for="date_of_birth">Date of Birth</label>
-                        <input type="date" id="date_of_birth" name="date_of_birth" class="form-control"
-                               value="<?= esc($staff['date_of_birth'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="date_joined">Date Joined</label>
-                        <input type="date" id="date_joined" name="date_joined" class="form-control"
-                               value="<?= esc($staff['date_joined'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="gender">Gender</label>
-                        <select id="gender" name="gender" class="form-control">
-                            <option value="">— Select —</option>
-                            <option value="Male" <?= ($staff['gender'] ?? '') === 'Male' ? 'selected' : '' ?>>Male</option>
-                            <option value="Female" <?= ($staff['gender'] ?? '') === 'Female' ? 'selected' : '' ?>>Female</option>
-                            <option value="Other" <?= ($staff['gender'] ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone_number">Phone Number</label>
-                        <input type="tel" id="phone_number" name="phone_number" class="form-control"
-                               value="<?= esc($staff['phone_number'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="position">Position</label>
-                        <input type="text" id="position" name="position" class="form-control"
-                               value="<?= esc($staff['position'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="address">Address</label>
-                        <textarea id="address" name="address" class="form-control" rows="3"><?= esc($staff['address'] ?? '') ?></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="biography">Biography</label>
-                        <textarea id="biography" name="biography" class="form-control" rows="4"><?= esc($staff['biography'] ?? '') ?></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="status">Status</label>
-                        <select id="status" name="status" class="form-control">
-                            <option value="active" <?= $staff['status'] === 'active' ? 'selected' : '' ?>>Active</option>
-                            <option value="suspended" <?= $staff['status'] === 'suspended' ? 'selected' : '' ?>>Suspended</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save</button>
                 </form>
             </div>
 
-            <div class="card">
+            <div class="card edit-staff-password-card">
                 <div class="card-header">
-                    <h2>Change Password</h2>
+                    <h2>Change password</h2>
                 </div>
                 <form method="POST">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="password">
                     <div class="form-group">
-                        <label for="new_password">New Password (min <?= PASSWORD_MIN_LENGTH ?> chars)</label>
-                        <input type="password" id="new_password" name="new_password" class="form-control" required>
+                        <label for="new_password">New password <span class="form-hint">(min <?= PASSWORD_MIN_LENGTH ?> characters)</span></label>
+                        <input type="password" id="new_password" name="new_password" class="form-control" required minlength="<?= PASSWORD_MIN_LENGTH ?>">
                     </div>
-                    <button type="submit" class="btn btn-primary">Change Password</button>
+                    <button type="submit" class="btn btn-primary">Change password</button>
                 </form>
             </div>
         </main>
     </div>
+    <script>
+        (function(){
+            var inp = document.getElementById('profile_image');
+            var img = document.getElementById('edit-staff-preview');
+            var defSrc = '<?= addslashes($profile_img) ?>';
+            if (inp && img) inp.addEventListener('change', function(){
+                var f = this.files[0];
+                if (f && f.type.match(/^image\/(jpeg|jpg|png)$/)) {
+                    var r = new FileReader();
+                    r.onload = function(){ img.src = r.result; };
+                    r.readAsDataURL(f);
+                } else if (!f) img.src = defSrc;
+            });
+        })();
+    </script>
 </body>
 </html>
