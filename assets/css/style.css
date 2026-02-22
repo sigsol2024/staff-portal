@@ -5,7 +5,7 @@
 
 :root {
   --primary: #0A1F44;
-  --accent: #D4F000;
+  --accent: #A6F05B;
   --bg: #FFFFFF;
   --danger: #E63946;
   --success: #2ECC71;
@@ -333,7 +333,7 @@ a:hover {
 }
 
 .table tr:hover td {
-  background: rgba(212, 240, 0, 0.05);
+  background: rgba(166, 240, 91, 0.05);
 }
 
 .table-actions {

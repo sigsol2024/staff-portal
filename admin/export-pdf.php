@@ -41,7 +41,7 @@ class StaffPDF extends FPDF
         $this->SetTextColor(255, 255, 255);
         $this->SetFont('Arial', 'B', 14);
         $this->Cell(0, 10, 'Staff Management Portal - Staff Export', 0, 1, 'L');
-        $this->SetFillColor(212, 240, 0); // Lemon
+        $this->SetFillColor(166, 240, 91); // Accent #A6F05B
         $this->Rect(0, 20, $this->w, 4, 'F');
         $this->SetY(30);
         $this->SetTextColor(0, 0, 0);
