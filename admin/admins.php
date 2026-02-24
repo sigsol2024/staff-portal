@@ -107,17 +107,29 @@ $flash = get_flash();
                                 <th>Email</th>
                                 <th>Role</th>
                                 <th>Created</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($admins_list)): ?>
-                                <tr><td colspan="3">No accounts yet.</td></tr>
+                                <tr><td colspan="4">No accounts yet.</td></tr>
                             <?php else: ?>
-                                <?php foreach ($admins_list as $a): ?>
+                                <?php $current_id = current_admin_id(); foreach ($admins_list as $a): ?>
                                 <tr>
                                     <td><?= esc($a['email']) ?></td>
                                     <td><span class="badge <?= ($a['role'] ?? 'admin') === 'admin' ? 'badge-success' : 'badge-warning' ?>"><?= esc(ucfirst($a['role'] ?? 'admin')) ?></span></td>
                                     <td><?= date('M j, Y', strtotime($a['created_at'])) ?></td>
+                                    <td>
+                                        <?php if ((int) $a['id'] !== $current_id): ?>
+                                        <form method="POST" action="<?= BASE_URL ?>/admin/delete-admin.php" style="display:inline;" onsubmit="return confirm('Remove this admin/manager account? They will no longer be able to log in.');">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="id" value="<?= (int) $a['id'] ?>">
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>
+                                        <?php else: ?>
+                                        <span class="form-hint">(you)</span>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
