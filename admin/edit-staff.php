@@ -6,6 +6,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/upload.php';
 
 require_admin_login();
+require_admin_only();
 
 $id = (int) ($_GET['id'] ?? 0);
 if (!$id) {

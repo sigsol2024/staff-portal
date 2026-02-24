@@ -72,3 +72,17 @@ CREATE TABLE IF NOT EXISTS `verification_codes` (
   KEY `email_type` (`email`,`type`),
   KEY `expires_at` (`expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Admin/Manager roles (admin = full access; manager = cannot edit/create staff or create admin/manager)
+DELIMITER //
+DROP PROCEDURE IF EXISTS add_admins_role_if_not_exists//
+CREATE PROCEDURE add_admins_role_if_not_exists()
+BEGIN
+  IF (SELECT COUNT(*) FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'admins' AND COLUMN_NAME = 'role') = 0 THEN
+    ALTER TABLE `admins` ADD COLUMN `role` varchar(20) NOT NULL DEFAULT 'admin' AFTER `password`;
+  END IF;
+END//
+DELIMITER ;
+CALL add_admins_role_if_not_exists();
+DROP PROCEDURE IF EXISTS add_admins_role_if_not_exists;

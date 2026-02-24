@@ -42,7 +42,9 @@ $profile_img = staff_profile_image($staff['profile_image']);
                         <a href="<?= BASE_URL ?>/admin/export-pdf.php?id=<?= $id ?>&download=1" class="btn btn-primary" target="_blank">Download PDF</a>
                         <a href="<?= BASE_URL ?>/admin/export-csv.php?id=<?= $id ?>" class="btn btn-accent">Download CSV</a>
                     <?php endif; ?>
+                    <?php if (is_admin_role()): ?>
                     <a href="<?= BASE_URL ?>/admin/edit-staff.php?id=<?= $id ?>" class="btn btn-accent">Edit</a>
+                    <?php endif; ?>
                     <a href="<?= BASE_URL ?>/admin/staff-list.php" class="btn btn-primary">Back to List</a>
                 </div>
             </div>

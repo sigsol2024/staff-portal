@@ -53,7 +53,9 @@ $staff_list = $stmt->fetchAll();
                 <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
                     <a href="<?= BASE_URL ?>/admin/export-pdf.php?download=1<?= $status_filter ? '&status=' . rawurlencode($status_filter) : '' ?>" class="btn btn-accent btn-sm" target="_blank">Download All (PDF)</a>
                     <a href="<?= BASE_URL ?>/admin/export-csv.php" class="btn btn-accent btn-sm">Download All (CSV)</a>
+                    <?php if (is_admin_role()): ?>
                     <a href="<?= BASE_URL ?>/admin/add-staff.php" class="btn btn-primary">Add Staff</a>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="search-bar">
@@ -101,7 +103,9 @@ $staff_list = $stmt->fetchAll();
                                                 <button type="button" class="btn btn-dropdown" aria-label="Actions" onclick="var m=this.nextElementSibling; document.querySelectorAll('.dropdown-menu.open').forEach(function(x){if(x!==m)x.classList.remove('open');}); m.classList.toggle('open'); if(m.classList.contains('open')){var r=this.getBoundingClientRect(); m.style.top=(r.bottom+4)+'px'; m.style.left=Math.max(8,Math.min(r.right-140,r.left))+'px';}">&#8230;</button>
                                                 <div class="dropdown-menu">
                                                     <a href="<?= BASE_URL ?>/admin/view-staff.php?id=<?= (int) $s['id'] ?>">View</a>
+                                                    <?php if (is_admin_role()): ?>
                                                     <a href="<?= BASE_URL ?>/admin/edit-staff.php?id=<?= (int) $s['id'] ?>">Edit</a>
+                                                    <?php endif; ?>
                                                     <?php if ($s['status'] === 'active'): ?>
                                                         <form method="POST" action="<?= BASE_URL ?>/admin/suspend-staff.php" onsubmit="return confirm('Suspend this staff?');">
                                                             <?= csrf_field() ?>
@@ -115,11 +119,13 @@ $staff_list = $stmt->fetchAll();
                                                             <button type="submit" class="dropdown-btn">Activate</button>
                                                         </form>
                                                     <?php endif; ?>
+                                                    <?php if (is_admin_role()): ?>
                                                     <form method="POST" action="<?= BASE_URL ?>/admin/delete-staff.php" onsubmit="return confirm('Delete this staff? Profile image will be removed.');">
                                                         <?= csrf_field() ?>
                                                         <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
                                                         <button type="submit" class="dropdown-btn dropdown-btn-danger">Delete</button>
                                                     </form>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
                                         </td>

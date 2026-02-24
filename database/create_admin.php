@@ -20,7 +20,7 @@ try {
         $stmt->execute([$hash, $email]);
         echo "Admin password updated. Email: $email, Password: $password<br>DELETE THIS FILE NOW.";
     } else {
-        $stmt = $pdo->prepare("INSERT INTO admins (email, password) VALUES (?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO admins (email, password, role) VALUES (?, ?, 'admin')");
         $stmt->execute([$email, $hash]);
         echo "Admin created. Email: $email, Password: $password<br>DELETE THIS FILE NOW.";
     }

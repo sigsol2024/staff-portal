@@ -6,6 +6,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/upload.php';
 
 require_admin_login();
+require_admin_only();
 
 $id = (int) ($_POST['id'] ?? 0);
 if (!$id || $_SERVER['REQUEST_METHOD'] !== 'POST' || !validate_csrf($_POST['csrf_token'] ?? '')) {

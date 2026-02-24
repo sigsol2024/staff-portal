@@ -52,6 +52,7 @@ CREATE TABLE `admins` (
   `id` int(11) UNSIGNED NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `role` varchar(20) NOT NULL DEFAULT 'admin' COMMENT 'admin or manager',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -59,9 +60,9 @@ CREATE TABLE `admins` (
 -- Dumping data for table `admins`
 --
 
-INSERT INTO `admins` (`id`, `email`, `password`, `created_at`) VALUES
-(1, 'admin@example.com', '$2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '2026-02-22 04:45:30'),
-(2, 'portal@signature-solutions.com', '$2y$10$7RaD61kFsm.1KR.I89Igy.1/gD5mje8W32EmgTt3TpOLtJNP5Iy8a', '2026-02-22 04:56:02');
+INSERT INTO `admins` (`id`, `email`, `password`, `role`, `created_at`) VALUES
+(1, 'admin@example.com', '$2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin', '2026-02-22 04:45:30'),
+(2, 'portal@signature-solutions.com', '$2y$10$7RaD61kFsm.1KR.I89Igy.1/gD5mje8W32EmgTt3TpOLtJNP5Iy8a', 'admin', '2026-02-22 04:56:02');
 
 -- --------------------------------------------------------
 

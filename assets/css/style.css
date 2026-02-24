@@ -473,6 +473,11 @@ label .required {
   color: var(--bg);
 }
 
+.badge-warning {
+  background: #f59e0b;
+  color: var(--bg);
+}
+
 /* Tables */
 .table-responsive {
   overflow-x: auto;
@@ -506,9 +511,15 @@ label .required {
   flex-wrap: wrap;
 }
 
-/* 3-dots dropdown for actions */
+/* 3-dots dropdown for actions - ensure menu appears on top of table/card */
+.table-actions {
+  position: relative;
+  z-index: 50;
+}
+
 .dropdown-wrap {
   position: relative;
+  z-index: 1;
 }
 
 .btn-dropdown {

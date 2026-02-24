@@ -44,6 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->prepare("DELETE FROM verification_codes WHERE email = ? AND type = 'login_otp' AND user_type = ?")->execute([$email, $user_type]);
                 if ($user_type === 'admin') {
                     $_SESSION['admin_id'] = (int) $user_id;
+                    $stmt = $pdo->prepare("SELECT role FROM admins WHERE id = ?");
+                    $stmt->execute([$user_id]);
+                    $ar = $stmt->fetch();
+                    $_SESSION['admin_role'] = isset($ar['role']) && in_array($ar['role'], ['admin', 'manager'], true) ? $ar['role'] : 'admin';
                 } else {
                     $_SESSION['staff_id'] = (int) $user_id;
                 }
