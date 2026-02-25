@@ -372,7 +372,9 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                     <div class="form-group">
                         <label for="profile_image">Passport Photograph (Profile Picture) *</label>
                         <div class="upload-photo-wrap">
-                            <img id="register-profile-preview" src="<?= BASE_URL ?>/assets/images/placeholder.svg" alt="Preview" class="register-profile-preview-img">
+                            <div class="register-profile-preview-box">
+                                <img id="register-profile-preview" src="<?= BASE_URL ?>/assets/images/placeholder.svg" alt="Preview" class="register-profile-preview-img">
+                            </div>
                             <input type="file" id="profile_image" name="profile_image" class="form-control" accept="image/jpeg,image/jpg,image/png" required>
                         </div>
                         <small class="form-text">JPG or PNG, max 2MB. This will be used as your profile picture.</small>
