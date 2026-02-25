@@ -103,82 +103,101 @@ $edit_enabled = (int) ($staff['profile_edit_enabled'] ?? 1);
                             <dd><?= format_date($staff['date_of_birth']) ?></dd>
                             <dt>Date joined</dt>
                             <dd><?= format_date($staff['date_joined']) ?></dd>
-                            <?php if (!empty($staff['address'])): ?>
                             <dt>Residential address</dt>
-                            <dd><?= nl2br(esc($staff['address'])) ?></dd>
-                            <?php endif; ?>
+                            <dd><?= !empty($staff['address']) ? nl2br(esc($staff['address'])) : '-' ?></dd>
+                            <dt>Biography</dt>
+                            <dd><?= !empty($staff['biography']) ? nl2br(esc($staff['biography'])) : '-' ?></dd>
                         </dl>
-                        <?php if (!empty($staff['biography'])): ?>
-                            <div class="view-staff-bio">
-                                <h3>Biography</h3>
-                                <p><?= nl2br(esc($staff['biography'])) ?></p>
-                            </div>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
 
-            <?php
-            $has_employment = !empty($staff['employee_id']) || !empty($staff['department']) || !empty($staff['employment_type']) || !empty($staff['reporting_manager']) || !empty($staff['work_location']) || !empty($staff['confirmation_date']);
-            $has_salary = isset($staff['basic_salary']) && $staff['basic_salary'] !== '' && $staff['basic_salary'] !== null;
-            $has_bank = !empty($staff['bank_name']) || !empty($staff['account_number']);
-            $has_statutory = !empty($staff['tax_identification_number']) || !empty($staff['pension_fund_administrator']) || !empty($staff['pension_pin']);
-            if ($has_employment || $has_salary || $has_bank || $has_statutory):
-            ?>
             <div class="card view-staff-card">
-                <h3 class="form-section-title">Employment &amp; other details</h3>
+                <h3 class="form-section-title">Employment Details</h3>
                 <dl class="view-staff-meta">
-                    <?php if (!empty($staff['employee_id'])): ?><dt>Employee ID</dt><dd><?= esc($staff['employee_id']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['department'])): ?><dt>Department</dt><dd><?= esc($staff['department']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['employment_type'])): ?><dt>Employment type</dt><dd><?= esc($staff['employment_type']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['confirmation_date'])): ?><dt>Confirmation date</dt><dd><?= format_date($staff['confirmation_date']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['reporting_manager'])): ?><dt>Reporting manager</dt><dd><?= esc($staff['reporting_manager']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['work_location'])): ?><dt>Work location</dt><dd><?= esc($staff['work_location']) ?></dd><?php endif; ?>
-                    <?php if ($has_salary): ?><dt>Basic salary</dt><dd><?= esc($staff['basic_salary']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['gross_monthly_salary'])): ?><dt>Gross monthly salary</dt><dd><?= esc($staff['gross_monthly_salary']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['bank_name'])): ?><dt>Bank name</dt><dd><?= esc($staff['bank_name']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['account_name'])): ?><dt>Account name</dt><dd><?= esc($staff['account_name']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['account_number'])): ?><dt>Account number</dt><dd><?= esc($staff['account_number']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['tax_identification_number'])): ?><dt>TIN</dt><dd><?= esc($staff['tax_identification_number']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['pension_fund_administrator'])): ?><dt>PFA</dt><dd><?= esc($staff['pension_fund_administrator']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['pension_pin'])): ?><dt>Pension PIN</dt><dd><?= esc($staff['pension_pin']) ?></dd><?php endif; ?>
-                    <?php if (!empty($staff['nhis_hmo_provider'])): ?><dt>NHIS/HMO</dt><dd><?= esc($staff['nhis_hmo_provider']) ?></dd><?php endif; ?>
+                    <dt>Employee ID</dt><dd><?= esc($staff['employee_id'] ?? '-') ?></dd>
+                    <dt>Department</dt><dd><?= esc($staff['department'] ?? '-') ?></dd>
+                    <dt>Employment type</dt><dd><?= esc($staff['employment_type'] ?? '-') ?></dd>
+                    <dt>Start date</dt><dd><?= format_date($staff['date_joined']) ?></dd>
+                    <dt>Confirmation date</dt><dd><?= format_date($staff['confirmation_date']) ?></dd>
+                    <dt>Reporting manager</dt><dd><?= esc($staff['reporting_manager'] ?? '-') ?></dd>
+                    <dt>Work location</dt><dd><?= esc($staff['work_location'] ?? '-') ?></dd>
                 </dl>
             </div>
-            <?php endif; ?>
 
-            <?php
-            $has_docs = !empty($staff['profile_image']) || !empty($staff['cv_path']) || !empty($staff['nin_document_path']);
-            if ($has_docs):
-            ?>
+            <div class="card view-staff-card">
+                <h3 class="form-section-title">Salary Structure</h3>
+                <dl class="view-staff-meta">
+                    <dt>Basic salary</dt><dd><?= esc($staff['basic_salary'] ?? '-') ?></dd>
+                    <dt>Housing allowance</dt><dd><?= esc($staff['housing_allowance'] ?? '-') ?></dd>
+                    <dt>Transport allowance</dt><dd><?= esc($staff['transport_allowance'] ?? '-') ?></dd>
+                    <dt>Other allowances</dt><dd><?= !empty($staff['other_allowances']) ? nl2br(esc($staff['other_allowances'])) : '-' ?></dd>
+                    <dt>Gross monthly salary</dt><dd><?= esc($staff['gross_monthly_salary'] ?? '-') ?></dd>
+                    <dt>Overtime rate</dt><dd><?= esc($staff['overtime_rate'] ?? '-') ?></dd>
+                    <dt>Bonus/Commission structure</dt><dd><?= !empty($staff['bonus_commission_structure']) ? nl2br(esc($staff['bonus_commission_structure'])) : '-' ?></dd>
+                </dl>
+            </div>
+
+            <div class="card view-staff-card">
+                <h3 class="form-section-title">Bank Details</h3>
+                <dl class="view-staff-meta">
+                    <dt>Bank name</dt><dd><?= esc($staff['bank_name'] ?? '-') ?></dd>
+                    <dt>Account name</dt><dd><?= esc($staff['account_name'] ?? '-') ?></dd>
+                    <dt>Account number</dt><dd><?= esc($staff['account_number'] ?? '-') ?></dd>
+                    <dt>BVN</dt><dd><?= esc($staff['bvn'] ?? '-') ?></dd>
+                </dl>
+            </div>
+
             <div class="card view-staff-card">
                 <h3 class="form-section-title">Documents</h3>
                 <p class="form-hint">View or download documents uploaded by staff. Available to admin and manager.</p>
                 <dl class="view-staff-meta view-staff-documents">
-                    <?php if (!empty($staff['profile_image'])): ?>
                     <dt>Passport photograph</dt>
                     <dd>
-                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=profile" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View</a>
-                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=profile&download=1" class="btn btn-sm btn-accent">Download</a>
+                        <?php if (!empty($staff['profile_image'])): ?>
+                            <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=profile" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View</a>
+                            <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=profile&download=1" class="btn btn-sm btn-accent">Download</a>
+                        <?php else: ?>-<?php endif; ?>
                     </dd>
-                    <?php endif; ?>
-                    <?php if (!empty($staff['cv_path'])): ?>
                     <dt>CV</dt>
                     <dd>
-                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=cv" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View</a>
-                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=cv&download=1" class="btn btn-sm btn-accent">Download</a>
+                        <?php if (!empty($staff['cv_path'])): ?>
+                            <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=cv" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View</a>
+                            <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=cv&download=1" class="btn btn-sm btn-accent">Download</a>
+                        <?php else: ?>-<?php endif; ?>
                     </dd>
-                    <?php endif; ?>
-                    <?php if (!empty($staff['nin_document_path'])): ?>
                     <dt>NIN document</dt>
                     <dd>
-                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=nin" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View</a>
-                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=nin&download=1" class="btn btn-sm btn-accent">Download</a>
+                        <?php if (!empty($staff['nin_document_path'])): ?>
+                            <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=nin" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View</a>
+                            <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=nin&download=1" class="btn btn-sm btn-accent">Download</a>
+                        <?php else: ?>-<?php endif; ?>
                     </dd>
-                    <?php endif; ?>
                 </dl>
             </div>
-            <?php endif; ?>
+
+            <div class="card view-staff-card">
+                <h3 class="form-section-title">Statutory &amp; Compliance</h3>
+                <dl class="view-staff-meta">
+                    <dt>TIN</dt><dd><?= esc($staff['tax_identification_number'] ?? '-') ?></dd>
+                    <dt>PFA</dt><dd><?= esc($staff['pension_fund_administrator'] ?? '-') ?></dd>
+                    <dt>Pension PIN</dt><dd><?= esc($staff['pension_pin'] ?? '-') ?></dd>
+                    <dt>NHF number</dt><dd><?= esc($staff['nhf_number'] ?? '-') ?></dd>
+                    <dt>NHIS/HMO provider</dt><dd><?= esc($staff['nhis_hmo_provider'] ?? '-') ?></dd>
+                    <dt>Employee contribution %</dt><dd><?= esc($staff['employee_contribution_percentages'] ?? '-') ?></dd>
+                </dl>
+            </div>
+
+            <div class="card view-staff-card">
+                <h3 class="form-section-title">Payroll Changes</h3>
+                <dl class="view-staff-meta">
+                    <dt>New hire</dt><dd><?= isset($staff['new_hire']) ? ((int)$staff['new_hire'] === 1 ? 'Yes' : 'No') : '-' ?></dd>
+                    <dt>Exit/Termination date</dt><dd><?= format_date($staff['exit_termination_date']) ?></dd>
+                    <dt>Salary adjustment notes</dt><dd><?= !empty($staff['salary_adjustment_notes']) ? nl2br(esc($staff['salary_adjustment_notes'])) : '-' ?></dd>
+                    <dt>Promotion/Role change</dt><dd><?= !empty($staff['promotion_role_change']) ? nl2br(esc($staff['promotion_role_change'])) : '-' ?></dd>
+                    <dt>Bank detail update</dt><dd><?= !empty($staff['bank_detail_update']) ? nl2br(esc($staff['bank_detail_update'])) : '-' ?></dd>
+                </dl>
+            </div>
         </main>
     </div>
 </body>

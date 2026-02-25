@@ -76,6 +76,17 @@ CREATE TABLE IF NOT EXISTS `verification_codes` (
   KEY `expires_at` (`expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Portal settings (global feature toggles)
+CREATE TABLE IF NOT EXISTS `portal_settings` (
+  `key` varchar(64) NOT NULL,
+  `value` text DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Default: allow staff profile editing globally (1 = enabled, 0 = disabled)
+INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('staff_profile_edit_global_enabled', '1');
+
 -- Admin/Manager roles (admin = full access; manager = cannot edit/create staff or create admin/manager)
 DELIMITER //
 DROP PROCEDURE IF EXISTS add_admins_role_if_not_exists//

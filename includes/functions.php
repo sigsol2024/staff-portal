@@ -66,3 +66,37 @@ function redirect_with(string $url, string $type, string $message): void
     header('Location: ' . $url);
     exit;
 }
+
+/**
+ * Read a portal setting from DB (portal_settings table).
+ * Returns $default if missing or DB unavailable.
+ */
+function get_portal_setting(string $key, ?string $default = null): ?string
+{
+    $pdo = $GLOBALS['pdo'] ?? null;
+    if (!$pdo) return $default;
+    try {
+        $stmt = $pdo->prepare("SELECT `value` FROM portal_settings WHERE `key` = ? LIMIT 1");
+        $stmt->execute([$key]);
+        $row = $stmt->fetch();
+        if (!$row) return $default;
+        return $row['value'] ?? $default;
+    } catch (Throwable $e) {
+        return $default;
+    }
+}
+
+/**
+ * Upsert a portal setting into DB (portal_settings table).
+ */
+function set_portal_setting(string $key, string $value): bool
+{
+    $pdo = $GLOBALS['pdo'] ?? null;
+    if (!$pdo) return false;
+    try {
+        $stmt = $pdo->prepare("INSERT INTO portal_settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated_at` = NOW()");
+        return (bool) $stmt->execute([$key, $value]);
+    } catch (Throwable $e) {
+        return false;
+    }
+}

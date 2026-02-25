@@ -156,6 +156,19 @@ CREATE TABLE `verification_codes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Table structure for table `portal_settings`
+--
+CREATE TABLE `portal_settings` (
+  `key` varchar(64) NOT NULL,
+  `value` text DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `portal_settings` (`key`, `value`) VALUES
+('staff_profile_edit_global_enabled', '1');
+
+--
 -- Dumping data for table `staff`
 --
 

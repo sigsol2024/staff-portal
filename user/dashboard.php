@@ -18,6 +18,8 @@ if (!$staff) {
 $profile_img = staff_profile_image($staff['profile_image']);
 $flash = get_flash();
 $edit_enabled = (int) ($staff['profile_edit_enabled'] ?? 1);
+$global_edit_enabled = (get_portal_setting('staff_profile_edit_global_enabled', '1') ?? '1') === '1';
+$can_edit_profile = $global_edit_enabled && $edit_enabled === 1;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -34,7 +36,7 @@ $edit_enabled = (int) ($staff['profile_edit_enabled'] ?? 1);
             <div class="page-header">
                 <h1>Dashboard</h1>
                 <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                    <?php if ($edit_enabled === 1): ?>
+                    <?php if ($can_edit_profile): ?>
                         <a href="<?= BASE_URL ?>/user/profile.php" class="btn btn-accent">Edit Profile</a>
                     <?php else: ?>
                         <span class="btn btn-danger" title="Profile editing has been disabled by admin.">Profile editing disabled</span>

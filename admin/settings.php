@@ -68,11 +68,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: ' . BASE_URL . '/admin/settings.php');
                 exit;
             }
+        } elseif ($action === 'global_profile_edit') {
+            if (!is_admin_role()) {
+                $error = 'You do not have permission to change global settings.';
+            } else {
+                $enabled = !empty($_POST['staff_profile_edit_global_enabled']) ? '1' : '0';
+                if (!set_portal_setting('staff_profile_edit_global_enabled', $enabled)) {
+                    $error = 'Could not update global setting. Ensure database schema is up to date.';
+                } else {
+                    set_flash('success', $enabled === '1'
+                        ? 'Global staff profile editing has been enabled.'
+                        : 'Global staff profile editing has been disabled.');
+                    header('Location: ' . BASE_URL . '/admin/settings.php');
+                    exit;
+                }
+            }
         }
     }
 }
 
 $flash = get_flash();
+$global_edit_enabled = (get_portal_setting('staff_profile_edit_global_enabled', '1') ?? '1') === '1';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -134,6 +150,28 @@ $flash = get_flash();
                         <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Change Password</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Global Staff Profile Editing</h2>
+                </div>
+                <p class="form-hint">When disabled, staff cannot access or edit their profile pages (dashboard edit button turns red and direct URLs redirect back).</p>
+                <form method="POST">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="global_profile_edit">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="staff_profile_edit_global_enabled" value="1" <?= $global_edit_enabled ? 'checked' : '' ?> <?= is_admin_role() ? '' : 'disabled' ?>>
+                            Enable staff profile editing globally
+                        </label>
+                    </div>
+                    <?php if (is_admin_role()): ?>
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('Apply this change globally for all staff?');">Save</button>
+                    <?php else: ?>
+                        <p class="form-hint">Only full admins can change this setting.</p>
+                    <?php endif; ?>
                 </form>
             </div>
         </main>
