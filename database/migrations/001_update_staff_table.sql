@@ -56,6 +56,7 @@ CALL add_staff_column_if_not_exists('promotion_role_change', 'text DEFAULT NULL 
 CALL add_staff_column_if_not_exists('bank_detail_update', 'text DEFAULT NULL AFTER `promotion_role_change`');
 CALL add_staff_column_if_not_exists('declaration_accepted', 'tinyint(1) DEFAULT NULL AFTER `bank_detail_update`');
 CALL add_staff_column_if_not_exists('email_verified', 'tinyint(1) NOT NULL DEFAULT 1 AFTER `declaration_accepted`');
+CALL add_staff_column_if_not_exists('profile_edit_enabled', 'tinyint(1) NOT NULL DEFAULT 1 COMMENT ''1=staff can edit profile, 0=locked'' AFTER `status`');
 CALL add_staff_column_if_not_exists('cv_path', 'varchar(255) DEFAULT NULL COMMENT ''Uploaded CV file'' AFTER `profile_image`');
 CALL add_staff_column_if_not_exists('nin_document_path', 'varchar(255) DEFAULT NULL COMMENT ''NIN document upload'' AFTER `cv_path`');
 

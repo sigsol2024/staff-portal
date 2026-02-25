@@ -103,6 +103,7 @@ CREATE TABLE `staff` (
   `cv_path` varchar(255) DEFAULT NULL COMMENT 'Uploaded CV file',
   `nin_document_path` varchar(255) DEFAULT NULL COMMENT 'NIN document upload',
   `status` enum('active','suspended') NOT NULL DEFAULT 'active',
+  `profile_edit_enabled` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1=staff can edit profile, 0=locked',
   `failed_attempts` int(11) NOT NULL DEFAULT 0,
   `locked_until` datetime DEFAULT NULL,
   `employee_id` varchar(100) DEFAULT NULL,

@@ -2,6 +2,7 @@
 define('STAFF_PORTAL', true);
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/session.php';
 require_once __DIR__ . '/includes/mail.php';
 
 if (!empty($_SESSION['staff_id'])) {
@@ -44,8 +45,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $pdo->prepare("UPDATE staff SET email_verified = 1 WHERE email = ?")->execute([$email]);
                 $pdo->prepare("DELETE FROM verification_codes WHERE email = ? AND type = 'registration'")->execute([$email]);
-                set_flash('success', 'Email verified. You can now log in.');
-                header('Location: ' . BASE_URL . '/login.php?type=staff&verified=1');
+
+                $stmt = $pdo->prepare("SELECT id FROM staff WHERE email = ? LIMIT 1");
+                $stmt->execute([$email]);
+                $row = $stmt->fetch();
+                if (!$row) {
+                    set_flash('success', 'Email verified. Please log in.');
+                    header('Location: ' . BASE_URL . '/login.php?type=staff&verified=1');
+                    exit;
+                }
+
+                $_SESSION['staff_id'] = (int) $row['id'];
+                regenerate_session();
+                set_flash('success', 'Email verified. Welcome!');
+                header('Location: ' . BASE_URL . '/user/dashboard.php');
                 exit;
             }
         }

@@ -22,6 +22,8 @@ if (!$staff) {
 }
 
 $profile_img = staff_profile_image($staff['profile_image']);
+$flash = get_flash();
+$edit_enabled = (int) ($staff['profile_edit_enabled'] ?? 1);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,10 +46,24 @@ $profile_img = staff_profile_image($staff['profile_image']);
                     <?php endif; ?>
                     <?php if (is_admin_role()): ?>
                     <a href="<?= BASE_URL ?>/admin/edit-staff.php?id=<?= $id ?>" class="btn btn-accent">Edit</a>
+                    <form method="POST" action="<?= BASE_URL ?>/admin/toggle-profile-edit.php" style="margin:0; display:inline;">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id" value="<?= (int)$id ?>">
+                        <?php if ($edit_enabled === 1): ?>
+                            <input type="hidden" name="enabled" value="0">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Disable profile editing for this staff? They will not be able to access the profile page.');">Disable profile editing</button>
+                        <?php else: ?>
+                            <input type="hidden" name="enabled" value="1">
+                            <button type="submit" class="btn btn-accent">Enable profile editing</button>
+                        <?php endif; ?>
+                    </form>
                     <?php endif; ?>
                     <a href="<?= BASE_URL ?>/admin/staff-list.php" class="btn btn-primary">Back to List</a>
                 </div>
             </div>
+            <?php if ($flash): ?>
+                <div class="alert alert-<?= $flash['type'] === 'success' ? 'success' : 'error' ?>"><?= esc($flash['message']) ?></div>
+            <?php endif; ?>
             <div class="card view-staff-card">
                 <div class="view-staff-profile">
                     <div class="view-staff-avatar-wrap">
@@ -67,6 +83,14 @@ $profile_img = staff_profile_image($staff['profile_image']);
                         <dl class="view-staff-meta">
                             <dt>Email</dt>
                             <dd><?= esc($staff['email']) ?></dd>
+                            <dt>Profile editing</dt>
+                            <dd>
+                                <?php if ($edit_enabled === 1): ?>
+                                    <span class="badge badge-success">Enabled</span>
+                                <?php else: ?>
+                                    <span class="badge badge-danger">Disabled</span>
+                                <?php endif; ?>
+                            </dd>
                             <dt>Phone</dt>
                             <dd><?= esc($staff['phone_number'] ?? '-') ?></dd>
                             <dt>Gender</dt>
