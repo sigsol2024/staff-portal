@@ -578,6 +578,21 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
             });
         }
 
+        var passwordEl = form.querySelector('[name="password"]');
+        var passwordConfirmEl = form.querySelector('[name="password_confirm"]');
+        function syncPasswordValidity() {
+            if (!passwordEl || !passwordConfirmEl) return;
+            var p1 = (passwordEl.value || '');
+            var p2 = (passwordConfirmEl.value || '');
+            if (p2 && p1 !== p2) {
+                passwordConfirmEl.setCustomValidity('Passwords do not match.');
+            } else {
+                passwordConfirmEl.setCustomValidity('');
+            }
+        }
+        if (passwordEl) passwordEl.addEventListener('input', syncPasswordValidity);
+        if (passwordConfirmEl) passwordConfirmEl.addEventListener('input', syncPasswordValidity);
+
         var bvnEl = form.querySelector('[name="bvn"]');
         var bvnConfirmEl = form.querySelector('[name="bvn_confirm"]');
         function syncBvnValidity() {
@@ -595,6 +610,7 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
 
         function validatePanel(panel) {
             if (!panel) return true;
+            syncPasswordValidity();
             syncBvnValidity();
             var fields = panel.querySelectorAll('input, select, textarea');
             for (var i = 0; i < fields.length; i++) {
