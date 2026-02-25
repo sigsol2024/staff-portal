@@ -578,38 +578,65 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
             });
         }
 
+        var bvnEl = form.querySelector('[name="bvn"]');
+        var bvnConfirmEl = form.querySelector('[name="bvn_confirm"]');
+        function syncBvnValidity() {
+            if (!bvnEl || !bvnConfirmEl) return;
+            var bvn = (bvnEl.value || '').trim();
+            var bvn2 = (bvnConfirmEl.value || '').trim();
+            if (bvn2 && bvn !== bvn2) {
+                bvnConfirmEl.setCustomValidity('BVN and Confirm BVN do not match.');
+            } else {
+                bvnConfirmEl.setCustomValidity('');
+            }
+        }
+        if (bvnEl) bvnEl.addEventListener('input', syncBvnValidity);
+        if (bvnConfirmEl) bvnConfirmEl.addEventListener('input', syncBvnValidity);
+
+        function validatePanel(panel) {
+            if (!panel) return true;
+            syncBvnValidity();
+            var fields = panel.querySelectorAll('input, select, textarea');
+            for (var i = 0; i < fields.length; i++) {
+                var el = fields[i];
+                if (el.disabled) continue;
+                if (!el.checkValidity()) {
+                    if (el.scrollIntoView) el.scrollIntoView({ block: 'center' });
+                    try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (e2) {} }
+                    if (el.reportValidity) el.reportValidity();
+                    return false;
+                }
+            }
+            return true;
+        }
+
         form.querySelectorAll('.btn-next').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var panel = this.closest('.multistep-panel');
-                var step = parseInt(panel.getAttribute('data-step'), 10);
-                var inputs = panel.querySelectorAll('input[required]:not([type=checkbox]), select[required], textarea[required]');
-                var valid = true;
-                inputs.forEach(function(inp) {
-                    if (!inp.value.trim()) { valid = false; inp.reportValidity && inp.reportValidity(); }
-                });
-                if (valid && step === 5) {
-                    var bvnEl = form.querySelector('[name="bvn"]');
-                    var bvnConfirmEl = form.querySelector('[name="bvn_confirm"]');
-                    if (bvnEl && bvnConfirmEl && bvnEl.value.trim() !== bvnConfirmEl.value.trim()) {
-                        valid = false;
-                        alert('BVN and Confirm BVN do not match.');
-                    }
-                }
-                if (valid && step === 6) {
-                    var cvEl = form.querySelector('[name="cv_file"]');
-                    var ninEl = form.querySelector('[name="nin_document"]');
-                    var photoEl = form.querySelector('[name="profile_image"]');
-                    if (!cvEl || !cvEl.files || !cvEl.files.length) { valid = false; alert('Please upload your CV.'); cvEl && cvEl.focus(); }
-                    else if (!ninEl || !ninEl.files || !ninEl.files.length) { valid = false; alert('Please upload your NIN document.'); ninEl && ninEl.focus(); }
-                    else if (!photoEl || !photoEl.files || !photoEl.files.length) { valid = false; alert('Please upload your passport photograph.'); photoEl && photoEl.focus(); }
-                }
-                if (valid) showStep(this.getAttribute('data-next'));
+                if (validatePanel(panel)) showStep(this.getAttribute('data-next'));
             });
         });
         form.querySelectorAll('.btn-prev').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 showStep(this.getAttribute('data-prev'));
             });
+        });
+
+        form.addEventListener('submit', function(e) {
+            syncBvnValidity();
+            if (form.checkValidity()) return;
+            e.preventDefault();
+            var firstInvalid = form.querySelector(':invalid');
+            if (!firstInvalid) return;
+            var invalidPanel = firstInvalid.closest('.multistep-panel');
+            if (invalidPanel) {
+                showStep(invalidPanel.getAttribute('data-step'));
+            }
+            setTimeout(function() {
+                if (firstInvalid.scrollIntoView) firstInvalid.scrollIntoView({ block: 'center' });
+                try { firstInvalid.focus({ preventScroll: true }); } catch (e2) { try { firstInvalid.focus(); } catch (e3) {} }
+                if (firstInvalid.reportValidity) firstInvalid.reportValidity();
+            }, 0);
         });
 
         var profileInput = form.querySelector('[name="profile_image"]');
