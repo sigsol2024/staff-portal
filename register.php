@@ -2,6 +2,7 @@
 define('STAFF_PORTAL', true);
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/upload.php';
 require_once __DIR__ . '/includes/mail.php';
 
 if (!empty($_SESSION['staff_id'])) {
@@ -25,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $t = function($v) { $v = trim($v ?? ''); return $v === '' ? null : $v; };
         $date_of_birth = $t($_POST['date_of_birth'] ?? '') ?: null;
         $date_joined = $t($_POST['date_joined'] ?? '') ?: null;
-        $confirmation_date = $t($_POST['confirmation_date'] ?? '') ?: null;
+        $confirmation_date = null;
         $exit_termination_date = $t($_POST['exit_termination_date'] ?? '') ?: null;
         $position = $t($_POST['position'] ?? '');
         $gender = $t($_POST['gender'] ?? '');
@@ -54,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $new_hire = isset($_POST['new_hire']) && $_POST['new_hire'] === '1' ? 1 : null;
         $salary_adjustment_notes = $t($_POST['salary_adjustment_notes'] ?? '');
         $promotion_role_change = $t($_POST['promotion_role_change'] ?? '');
-        $bank_detail_update = $t($_POST['bank_detail_update'] ?? '');
+        $bank_detail_update = null;
 
         $decimal = function($v) { $v = trim($v ?? ''); return $v === '' ? null : (is_numeric($v) ? $v : null); };
         $basic_salary = $decimal($_POST['basic_salary'] ?? '');
@@ -62,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $transport_allowance = $decimal($_POST['transport_allowance'] ?? '');
         $gross_monthly_salary = $decimal($_POST['gross_monthly_salary'] ?? '');
 
+        $bvn_confirm = $t($_POST['bvn_confirm'] ?? '');
         if (empty($email) || empty($full_name) || empty($password)) {
             $error = 'Email, full name and password are required.';
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -70,20 +72,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Password must be at least ' . PASSWORD_MIN_LENGTH . ' characters.';
         } elseif ($password !== $password_confirm) {
             $error = 'Passwords do not match.';
+        } elseif (empty($gender) || empty($date_of_birth) || empty($address) || empty($phone_number) || empty($marital_status)) {
+            $error = 'Gender, date of birth, residential address, phone number and marital status are required.';
+        } elseif (empty($department) || empty($employment_type) || empty($date_joined)) {
+            $error = 'Department, employment type and start date are required.';
+        } elseif ($basic_salary === null || $basic_salary === '') {
+            $error = 'Basic salary is required.';
+        } elseif (empty($bank_name) || empty($account_name) || empty($account_number) || empty($bvn)) {
+            $error = 'Bank name, account name, account number and BVN are required.';
+        } elseif (strlen($bvn) !== 11 || !ctype_digit($bvn)) {
+            $error = 'BVN must be exactly 11 digits.';
+        } elseif ($bvn !== $bvn_confirm) {
+            $error = 'BVN and Confirm BVN do not match.';
+        } elseif (empty($_FILES['cv_file']['name']) || $_FILES['cv_file']['error'] === UPLOAD_ERR_NO_FILE) {
+            $error = 'CV upload is required.';
+        } elseif (empty($_FILES['nin_document']['name']) || $_FILES['nin_document']['error'] === UPLOAD_ERR_NO_FILE) {
+            $error = 'NIN (National Identification Number) document upload is required.';
+        } elseif (empty($_FILES['profile_image']['name']) || $_FILES['profile_image']['error'] === UPLOAD_ERR_NO_FILE) {
+            $error = 'Passport photograph (profile picture) is required.';
         } else {
+            $cv_path = handle_cv_upload($_FILES['cv_file']);
+            $nin_path = handle_nin_document_upload($_FILES['nin_document']);
+            $profile_image = handle_profile_upload($_FILES['profile_image']);
+            if ($cv_path === false) {
+                $error = 'Invalid CV. Use PDF or JPG/PNG, max 5MB.';
+            } elseif ($nin_path === false) {
+                $error = 'Invalid NIN document. Use PDF or JPG/PNG, max 5MB.';
+            } elseif ($profile_image === false) {
+                $error = 'Invalid passport photo. Use JPG or PNG, max 2MB.';
+            } else {
             $stmt = $pdo->prepare("SELECT id FROM staff WHERE email = ?");
             $stmt->execute([$email]);
             if ($stmt->fetch()) {
                 $error = 'This email is already registered.';
             } else {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                $sql = "INSERT INTO staff (email, password, full_name, date_of_birth, date_joined, position, biography, phone_number, gender, address, status,
+                $sql = "INSERT INTO staff (email, password, full_name, date_of_birth, date_joined, position, biography, phone_number, gender, address, profile_image, cv_path, nin_document_path, status,
                     marital_status, employee_id, department, employment_type, confirmation_date, reporting_manager, work_location,
                     basic_salary, housing_allowance, transport_allowance, other_allowances, gross_monthly_salary, overtime_rate, bonus_commission_structure,
                     bank_name, account_name, account_number, bvn,
                     tax_identification_number, pension_fund_administrator, pension_pin, nhf_number, nhis_hmo_provider, employee_contribution_percentages,
                     new_hire, exit_termination_date, salary_adjustment_notes, promotion_role_change, bank_detail_update, declaration_accepted, email_verified)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active',
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active',
                     ?, ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?,
@@ -92,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare($sql);
                 try {
                     $stmt->execute([
-                        $email, $hash, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address,
+                        $email, $hash, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address, $profile_image, $cv_path, $nin_path,
                         $marital_status, $employee_id, $department, $employment_type, $confirmation_date, $reporting_manager, $work_location,
                         $basic_salary, $housing_allowance, $transport_allowance, $other_allowances, $gross_monthly_salary, $overtime_rate, $bonus_commission_structure,
                         $bank_name, $account_name, $account_number, $bvn,
@@ -109,8 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header('Location: ' . BASE_URL . '/verify-email.php?email=' . rawurlencode($email));
                     exit;
                 } catch (PDOException $e) {
-                    $error = 'Registration failed. Please try again. Ensure the database schema is up to date (use database/sigsol_sigsolportal.sql).';
+                    $error = 'Registration failed. Please try again. Ensure the database schema is up to date (run database/migrations/001_update_staff_table.sql).';
+                    delete_profile_image($profile_image);
+                    delete_cv_file($cv_path);
+                    delete_nin_document($nin_path);
                 }
+            }
             }
         }
     }
@@ -131,7 +165,7 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
     <div class="auth-wrapper">
         <div class="auth-card multistep-card multistep-card-wide">
             <h1>Staff Registration</h1>
-            <div class="multistep-progress multistep-progress-7">
+            <div class="multistep-progress multistep-progress-9">
                 <span class="step-dot active" data-step="1">1</span>
                 <span class="step-line"></span>
                 <span class="step-dot" data-step="2">2</span>
@@ -145,11 +179,15 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                 <span class="step-dot" data-step="6">6</span>
                 <span class="step-line"></span>
                 <span class="step-dot" data-step="7">7</span>
+                <span class="step-line"></span>
+                <span class="step-dot" data-step="8">8</span>
+                <span class="step-line"></span>
+                <span class="step-dot" data-step="9">9</span>
             </div>
             <?php if ($error): ?>
                 <div class="alert alert-error"><?= esc($error) ?></div>
             <?php endif; ?>
-            <form method="POST" action="" id="register-form">
+            <form method="POST" action="" id="register-form" enctype="multipart/form-data">
                 <?= csrf_field() ?>
 
                 <div class="multistep-panel active" data-step="1">
@@ -176,8 +214,8 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                         <input type="text" id="full_name" name="full_name" class="form-control" required value="<?= $esc('full_name') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="gender">Gender</label>
-                        <select id="gender" name="gender" class="form-control">
+                        <label for="gender">Gender *</label>
+                        <select id="gender" name="gender" class="form-control" required>
                             <option value="">— Select —</option>
                             <option value="Male" <?= ($post['gender'] ?? '') === 'Male' ? 'selected' : '' ?>>Male</option>
                             <option value="Female" <?= ($post['gender'] ?? '') === 'Female' ? 'selected' : '' ?>>Female</option>
@@ -185,20 +223,20 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="date_of_birth">Date of Birth</label>
-                        <input type="date" id="date_of_birth" name="date_of_birth" class="form-control" value="<?= $esc('date_of_birth') ?>">
+                        <label for="date_of_birth">Date of Birth *</label>
+                        <input type="date" id="date_of_birth" name="date_of_birth" class="form-control" required value="<?= $esc('date_of_birth') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="address">Residential Address</label>
-                        <textarea id="address" name="address" class="form-control" rows="2"><?= $esc('address') ?></textarea>
+                        <label for="address">Residential Address *</label>
+                        <textarea id="address" name="address" class="form-control" rows="2" required><?= $esc('address') ?></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="phone_number">Phone Number</label>
-                        <input type="tel" id="phone_number" name="phone_number" class="form-control" value="<?= $esc('phone_number') ?>">
+                        <label for="phone_number">Phone Number *</label>
+                        <input type="tel" id="phone_number" name="phone_number" class="form-control" required value="<?= $esc('phone_number') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="marital_status">Marital Status</label>
-                        <select id="marital_status" name="marital_status" class="form-control">
+                        <label for="marital_status">Marital Status *</label>
+                        <select id="marital_status" name="marital_status" class="form-control" required>
                             <option value="">— Select —</option>
                             <option value="Single" <?= ($post['marital_status'] ?? '') === 'Single' ? 'selected' : '' ?>>Single</option>
                             <option value="Married" <?= ($post['marital_status'] ?? '') === 'Married' ? 'selected' : '' ?>>Married</option>
@@ -224,12 +262,12 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                         <input type="text" id="position" name="position" class="form-control" value="<?= $esc('position') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="department">Department</label>
-                        <input type="text" id="department" name="department" class="form-control" value="<?= $esc('department') ?>">
+                        <label for="department">Department *</label>
+                        <input type="text" id="department" name="department" class="form-control" required value="<?= $esc('department') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="employment_type">Employment Type</label>
-                        <select id="employment_type" name="employment_type" class="form-control">
+                        <label for="employment_type">Employment Type *</label>
+                        <select id="employment_type" name="employment_type" class="form-control" required>
                             <option value="">— Select —</option>
                             <option value="Full-time" <?= ($post['employment_type'] ?? '') === 'Full-time' ? 'selected' : '' ?>>Full-time</option>
                             <option value="Part-time" <?= ($post['employment_type'] ?? '') === 'Part-time' ? 'selected' : '' ?>>Part-time</option>
@@ -237,12 +275,8 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="date_joined">Employment Start Date</label>
-                        <input type="date" id="date_joined" name="date_joined" class="form-control" value="<?= $esc('date_joined') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="confirmation_date">Confirmation Date (if applicable)</label>
-                        <input type="date" id="confirmation_date" name="confirmation_date" class="form-control" value="<?= $esc('confirmation_date') ?>">
+                        <label for="date_joined">Employment Start Date *</label>
+                        <input type="date" id="date_joined" name="date_joined" class="form-control" required value="<?= $esc('date_joined') ?>">
                     </div>
                     <div class="form-group">
                         <label for="reporting_manager">Reporting Manager</label>
@@ -261,8 +295,8 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                 <div class="multistep-panel" data-step="4">
                     <h2 class="step-title">4. Salary Structure</h2>
                     <div class="form-group">
-                        <label for="basic_salary">Basic Salary</label>
-                        <input type="number" id="basic_salary" name="basic_salary" class="form-control" step="0.01" min="0" placeholder="0.00" value="<?= $esc('basic_salary') ?>">
+                        <label for="basic_salary">Basic Salary *</label>
+                        <input type="number" id="basic_salary" name="basic_salary" class="form-control" step="0.01" min="0" placeholder="0.00" required value="<?= $esc('basic_salary') ?>">
                     </div>
                     <div class="form-group">
                         <label for="housing_allowance">Housing Allowance</label>
@@ -297,20 +331,24 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                 <div class="multistep-panel" data-step="5">
                     <h2 class="step-title">5. Bank Details</h2>
                     <div class="form-group">
-                        <label for="bank_name">Bank Name</label>
-                        <input type="text" id="bank_name" name="bank_name" class="form-control" value="<?= $esc('bank_name') ?>">
+                        <label for="bank_name">Bank Name *</label>
+                        <input type="text" id="bank_name" name="bank_name" class="form-control" required value="<?= $esc('bank_name') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="account_name">Account Name</label>
-                        <input type="text" id="account_name" name="account_name" class="form-control" value="<?= $esc('account_name') ?>">
+                        <label for="account_name">Account Name *</label>
+                        <input type="text" id="account_name" name="account_name" class="form-control" required value="<?= $esc('account_name') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="account_number">Account Number</label>
-                        <input type="text" id="account_number" name="account_number" class="form-control" value="<?= $esc('account_number') ?>">
+                        <label for="account_number">Account Number *</label>
+                        <input type="text" id="account_number" name="account_number" class="form-control" required value="<?= $esc('account_number') ?>">
                     </div>
                     <div class="form-group">
-                        <label for="bvn">BVN (if required)</label>
-                        <input type="text" id="bvn" name="bvn" class="form-control" value="<?= $esc('bvn') ?>">
+                        <label for="bvn">BVN *</label>
+                        <input type="text" id="bvn" name="bvn" class="form-control" maxlength="11" pattern="[0-9]{11}" title="BVN must be 11 digits" required value="<?= $esc('bvn') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="bvn_confirm">Confirm BVN *</label>
+                        <input type="text" id="bvn_confirm" name="bvn_confirm" class="form-control" maxlength="11" pattern="[0-9]{11}" title="BVN must be 11 digits" required value="<?= $esc('bvn_confirm') ?>">
                     </div>
                     <div class="step-buttons">
                         <button type="button" class="btn btn-primary btn-prev" data-prev="4">Previous</button>
@@ -319,7 +357,34 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                 </div>
 
                 <div class="multistep-panel" data-step="6">
-                    <h2 class="step-title">6. Statutory &amp; Compliance Information</h2>
+                    <h2 class="step-title">6. Documents &amp; Photo</h2>
+                    <p class="form-hint">Upload your CV, NIN document, and passport photograph. All three are required.</p>
+                    <div class="form-group">
+                        <label for="cv_file">CV (Curriculum Vitae) *</label>
+                        <input type="file" id="cv_file" name="cv_file" class="form-control" accept=".pdf,application/pdf,image/jpeg,image/jpg,image/png" required>
+                        <small class="form-text">PDF or JPG/PNG, max 5MB</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="nin_document">NIN (National Identification Number) Document *</label>
+                        <input type="file" id="nin_document" name="nin_document" class="form-control" accept=".pdf,application/pdf,image/jpeg,image/jpg,image/png" required>
+                        <small class="form-text">Upload a scan or photo of your NIN slip/card. PDF or JPG/PNG, max 5MB</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile_image">Passport Photograph (Profile Picture) *</label>
+                        <div class="upload-photo-wrap">
+                            <img id="register-profile-preview" src="<?= BASE_URL ?>/assets/images/placeholder.svg" alt="Preview" class="register-profile-preview-img">
+                            <input type="file" id="profile_image" name="profile_image" class="form-control" accept="image/jpeg,image/jpg,image/png" required>
+                        </div>
+                        <small class="form-text">JPG or PNG, max 2MB. This will be used as your profile picture.</small>
+                    </div>
+                    <div class="step-buttons">
+                        <button type="button" class="btn btn-primary btn-prev" data-prev="5">Previous</button>
+                        <button type="button" class="btn btn-primary btn-next" data-next="7">Next</button>
+                    </div>
+                </div>
+
+                <div class="multistep-panel" data-step="7">
+                    <h2 class="step-title">7. Statutory &amp; Compliance Information</h2>
                     <div class="form-group">
                         <label for="tax_identification_number">Tax Identification Number (TIN)</label>
                         <input type="text" id="tax_identification_number" name="tax_identification_number" class="form-control" value="<?= $esc('tax_identification_number') ?>">
@@ -345,13 +410,23 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                         <input type="text" id="employee_contribution_percentages" name="employee_contribution_percentages" class="form-control" value="<?= $esc('employee_contribution_percentages') ?>">
                     </div>
                     <div class="step-buttons">
-                        <button type="button" class="btn btn-primary btn-prev" data-prev="5">Previous</button>
-                        <button type="button" class="btn btn-primary btn-next" data-next="7">Next</button>
+                        <button type="button" class="btn btn-primary btn-prev" data-prev="6">Previous</button>
+                        <button type="button" class="btn btn-primary btn-next" data-next="8">Next</button>
                     </div>
                 </div>
 
-                <div class="multistep-panel" data-step="7">
-                    <h2 class="step-title">7. Payroll Changes &amp; Declaration</h2>
+                <div class="multistep-panel" data-step="8" id="preview-panel">
+                    <h2 class="step-title">8. Review Your Information</h2>
+                    <p class="form-hint">Please review all details below before proceeding to submit.</p>
+                    <div id="preview-content" class="preview-summary"></div>
+                    <div class="step-buttons">
+                        <button type="button" class="btn btn-primary btn-prev" data-prev="7">Previous</button>
+                        <button type="button" class="btn btn-primary btn-next" data-next="9">Confirm &amp; Continue</button>
+                    </div>
+                </div>
+
+                <div class="multistep-panel" data-step="9">
+                    <h2 class="step-title">9. Declaration</h2>
                     <div class="form-group">
                         <label for="new_hire">New Hire</label>
                         <select id="new_hire" name="new_hire" class="form-control">
@@ -372,10 +447,6 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                         <label for="promotion_role_change">Promotion/Role Change</label>
                         <input type="text" id="promotion_role_change" name="promotion_role_change" class="form-control" value="<?= $esc('promotion_role_change') ?>">
                     </div>
-                    <div class="form-group">
-                        <label for="bank_detail_update">Bank Detail Update</label>
-                        <input type="text" id="bank_detail_update" name="bank_detail_update" class="form-control" value="<?= $esc('bank_detail_update') ?>">
-                    </div>
                     <div class="form-group declaration-box">
                         <p class="declaration-text">I confirm that the above information is accurate and complete.</p>
                         <label class="declaration-label">
@@ -384,7 +455,7 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                         </label>
                     </div>
                     <div class="step-buttons">
-                        <button type="button" class="btn btn-primary btn-prev" data-prev="6">Previous</button>
+                        <button type="button" class="btn btn-primary btn-prev" data-prev="8">Previous</button>
                         <button type="submit" class="btn btn-primary">Register</button>
                     </div>
                 </div>
@@ -400,8 +471,101 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
         var panels = form.querySelectorAll('.multistep-panel');
         var dots = form.closest('.multistep-card').querySelectorAll('.step-dot');
 
+        function getFormValue(name) {
+            var el = form.querySelector('[name="' + name + '"]');
+            if (!el) return '';
+            if (el.type === 'checkbox') return el.checked ? (el.value || 'Yes') : '';
+            return (el.value || '').trim();
+        }
+
+        function getSelectLabel(name) {
+            var el = form.querySelector('[name="' + name + '"]');
+            if (!el || el.tagName !== 'SELECT') return getFormValue(name);
+            var opt = el.options[el.selectedIndex];
+            return opt ? opt.text : '';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function updatePreview() {
+            var sections = [
+                { title: 'Account', fields: [
+                    { label: 'Email', value: getFormValue('email') },
+                    { label: 'Full Name', value: getFormValue('full_name') }
+                ]},
+                { title: 'Personal Information', fields: [
+                    { label: 'Gender', value: getSelectLabel('gender') },
+                    { label: 'Date of Birth', value: getFormValue('date_of_birth') },
+                    { label: 'Residential Address', value: getFormValue('address') },
+                    { label: 'Phone Number', value: getFormValue('phone_number') },
+                    { label: 'Marital Status', value: getSelectLabel('marital_status') }
+                ]},
+                { title: 'Employment Details', fields: [
+                    { label: 'Employee ID', value: getFormValue('employee_id') },
+                    { label: 'Job Title', value: getFormValue('position') },
+                    { label: 'Department', value: getFormValue('department') },
+                    { label: 'Employment Type', value: getSelectLabel('employment_type') },
+                    { label: 'Start Date', value: getFormValue('date_joined') },
+                    { label: 'Reporting Manager', value: getFormValue('reporting_manager') },
+                    { label: 'Work Location', value: getFormValue('work_location') }
+                ]},
+                { title: 'Salary', fields: [
+                    { label: 'Basic Salary', value: getFormValue('basic_salary') },
+                    { label: 'Housing Allowance', value: getFormValue('housing_allowance') },
+                    { label: 'Transport Allowance', value: getFormValue('transport_allowance') },
+                    { label: 'Gross Monthly Salary', value: getFormValue('gross_monthly_salary') }
+                ]},
+                { title: 'Bank Details', fields: [
+                    { label: 'Bank Name', value: getFormValue('bank_name') },
+                    { label: 'Account Name', value: getFormValue('account_name') },
+                    { label: 'Account Number', value: getFormValue('account_number') },
+                    { label: 'BVN', value: getFormValue('bvn') }
+                ]},
+                { title: 'Documents & Photo', fields: (function() {
+                    var cv = form.querySelector('[name="cv_file"]');
+                    var nin = form.querySelector('[name="nin_document"]');
+                    var photo = form.querySelector('[name="profile_image"]');
+                    var arr = [];
+                    if (cv && cv.files && cv.files[0]) arr.push({ label: 'CV', value: cv.files[0].name });
+                    if (nin && nin.files && nin.files[0]) arr.push({ label: 'NIN Document', value: nin.files[0].name });
+                    if (photo && photo.files && photo.files[0]) arr.push({ label: 'Passport Photo', value: photo.files[0].name });
+                    return arr;
+                })() },
+                { title: 'Statutory & Compliance', fields: [
+                    { label: 'TIN', value: getFormValue('tax_identification_number') },
+                    { label: 'PFA', value: getFormValue('pension_fund_administrator') },
+                    { label: 'Pension PIN', value: getFormValue('pension_pin') },
+                    { label: 'NHIS/HMO', value: getFormValue('nhis_hmo_provider') }
+                ]},
+                { title: 'Payroll', fields: [
+                    { label: 'New Hire', value: getSelectLabel('new_hire') },
+                    { label: 'Exit/Termination Date', value: getFormValue('exit_termination_date') },
+                    { label: 'Promotion/Role Change', value: getFormValue('promotion_role_change') }
+                ]}
+            ];
+            var html = '';
+            sections.forEach(function(s) {
+                html += '<div class="preview-section"><h3 class="preview-section-title">' + escapeHtml(s.title || '') + '</h3><dl class="preview-dl">';
+                s.fields.forEach(function(f) {
+                    if (f.value) html += '<dt>' + escapeHtml(f.label) + '</dt><dd>' + escapeHtml(f.value) + '</dd>';
+                });
+                html += '</dl></div>';
+            });
+            var wrap = form.querySelector('#preview-content');
+            if (wrap) wrap.innerHTML = html || '<p>No data to display.</p>';
+        }
+
         function showStep(step) {
             step = parseInt(step, 10);
+            if (step === 8) updatePreview();
             panels.forEach(function(p) {
                 p.classList.toggle('active', parseInt(p.getAttribute('data-step'), 10) === step);
             });
@@ -415,11 +579,28 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
         form.querySelectorAll('.btn-next').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var panel = this.closest('.multistep-panel');
-                var inputs = panel.querySelectorAll('input[required]:not([type=checkbox]), select[required]');
+                var step = parseInt(panel.getAttribute('data-step'), 10);
+                var inputs = panel.querySelectorAll('input[required]:not([type=checkbox]), select[required], textarea[required]');
                 var valid = true;
                 inputs.forEach(function(inp) {
                     if (!inp.value.trim()) { valid = false; inp.reportValidity && inp.reportValidity(); }
                 });
+                if (valid && step === 5) {
+                    var bvnEl = form.querySelector('[name="bvn"]');
+                    var bvnConfirmEl = form.querySelector('[name="bvn_confirm"]');
+                    if (bvnEl && bvnConfirmEl && bvnEl.value.trim() !== bvnConfirmEl.value.trim()) {
+                        valid = false;
+                        alert('BVN and Confirm BVN do not match.');
+                    }
+                }
+                if (valid && step === 6) {
+                    var cvEl = form.querySelector('[name="cv_file"]');
+                    var ninEl = form.querySelector('[name="nin_document"]');
+                    var photoEl = form.querySelector('[name="profile_image"]');
+                    if (!cvEl || !cvEl.files || !cvEl.files.length) { valid = false; alert('Please upload your CV.'); cvEl && cvEl.focus(); }
+                    else if (!ninEl || !ninEl.files || !ninEl.files.length) { valid = false; alert('Please upload your NIN document.'); ninEl && ninEl.focus(); }
+                    else if (!photoEl || !photoEl.files || !photoEl.files.length) { valid = false; alert('Please upload your passport photograph.'); photoEl && photoEl.focus(); }
+                }
                 if (valid) showStep(this.getAttribute('data-next'));
             });
         });
@@ -428,6 +609,21 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                 showStep(this.getAttribute('data-prev'));
             });
         });
+
+        var profileInput = form.querySelector('[name="profile_image"]');
+        var profilePreview = document.getElementById('register-profile-preview');
+        var placeholderSrc = profilePreview ? profilePreview.src : '';
+        if (profileInput && profilePreview) {
+            profileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    var r = new FileReader();
+                    r.onload = function(e) { profilePreview.src = e.target.result; };
+                    r.readAsDataURL(this.files[0]);
+                } else {
+                    profilePreview.src = placeholderSrc;
+                }
+            });
+        }
     })();
     </script>
     <script src="<?= BASE_URL ?>/assets/js/script.js"></script>

@@ -100,6 +100,8 @@ CREATE TABLE `staff` (
   `address` text DEFAULT NULL,
   `marital_status` varchar(50) DEFAULT NULL,
   `profile_image` varchar(255) DEFAULT NULL,
+  `cv_path` varchar(255) DEFAULT NULL COMMENT 'Uploaded CV file',
+  `nin_document_path` varchar(255) DEFAULT NULL COMMENT 'NIN document upload',
   `status` enum('active','suspended') NOT NULL DEFAULT 'active',
   `failed_attempts` int(11) NOT NULL DEFAULT 0,
   `locked_until` datetime DEFAULT NULL,

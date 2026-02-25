@@ -52,6 +52,12 @@ $profile_img = staff_profile_image($staff['profile_image']);
                 <div class="view-staff-profile">
                     <div class="view-staff-avatar-wrap">
                         <img src="<?= esc($profile_img) ?>" alt="Profile" class="profile-img-lg">
+                        <?php if (!empty($staff['profile_image'])): ?>
+                        <div class="document-actions">
+                            <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=profile" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View</a>
+                            <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=profile&download=1" class="btn btn-sm btn-accent">Download</a>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     <div class="view-staff-details">
                         <div class="view-staff-header">
@@ -113,6 +119,39 @@ $profile_img = staff_profile_image($staff['profile_image']);
                     <?php if (!empty($staff['pension_fund_administrator'])): ?><dt>PFA</dt><dd><?= esc($staff['pension_fund_administrator']) ?></dd><?php endif; ?>
                     <?php if (!empty($staff['pension_pin'])): ?><dt>Pension PIN</dt><dd><?= esc($staff['pension_pin']) ?></dd><?php endif; ?>
                     <?php if (!empty($staff['nhis_hmo_provider'])): ?><dt>NHIS/HMO</dt><dd><?= esc($staff['nhis_hmo_provider']) ?></dd><?php endif; ?>
+                </dl>
+            </div>
+            <?php endif; ?>
+
+            <?php
+            $has_docs = !empty($staff['profile_image']) || !empty($staff['cv_path']) || !empty($staff['nin_document_path']);
+            if ($has_docs):
+            ?>
+            <div class="card view-staff-card">
+                <h3 class="form-section-title">Documents</h3>
+                <p class="form-hint">View or download documents uploaded by staff. Available to admin and manager.</p>
+                <dl class="view-staff-meta view-staff-documents">
+                    <?php if (!empty($staff['profile_image'])): ?>
+                    <dt>Passport photograph</dt>
+                    <dd>
+                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=profile" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View</a>
+                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=profile&download=1" class="btn btn-sm btn-accent">Download</a>
+                    </dd>
+                    <?php endif; ?>
+                    <?php if (!empty($staff['cv_path'])): ?>
+                    <dt>CV</dt>
+                    <dd>
+                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=cv" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View</a>
+                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=cv&download=1" class="btn btn-sm btn-accent">Download</a>
+                    </dd>
+                    <?php endif; ?>
+                    <?php if (!empty($staff['nin_document_path'])): ?>
+                    <dt>NIN document</dt>
+                    <dd>
+                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=nin" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View</a>
+                        <a href="<?= BASE_URL ?>/admin/view-document.php?id=<?= (int)$id ?>&type=nin&download=1" class="btn btn-sm btn-accent">Download</a>
+                    </dd>
+                    <?php endif; ?>
                 </dl>
             </div>
             <?php endif; ?>

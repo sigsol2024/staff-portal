@@ -46,13 +46,16 @@ define('BASE_URL', $protocol . '://' . $host . $basePath);
 define('ROOT_PATH', dirname(__DIR__));
 define('UPLOAD_PATH', ROOT_PATH . '/uploads/profile_images/');
 define('UPLOAD_URL', BASE_URL . '/uploads/profile_images/');
+define('UPLOAD_CV_PATH', ROOT_PATH . '/uploads/cv/');
+define('UPLOAD_NIN_PATH', ROOT_PATH . '/uploads/nin_documents/');
 
 // Security constants
 define('SESSION_LIFETIME', 1800);      // 30 minutes
 define('MAX_LOGIN_ATTEMPTS', 5);
 define('LOCK_DURATION', 900);          // 15 minutes
 define('PASSWORD_MIN_LENGTH', 8);
-define('UPLOAD_MAX_SIZE', 2 * 1024 * 1024);  // 2MB
+define('UPLOAD_MAX_SIZE', 2 * 1024 * 1024);  // 2MB for profile images
+define('UPLOAD_DOCUMENT_MAX_SIZE', 5 * 1024 * 1024);  // 5MB for CV and NIN documents
 define('TOKEN_EXPIRY_HOURS', 1);
 
 // SMTP / Mail (PHPMailer)

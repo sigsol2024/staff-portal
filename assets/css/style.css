@@ -135,14 +135,83 @@ a:hover {
   max-width: 560px;
 }
 
-.multistep-progress-7 .step-dot {
-  width: 28px;
-  height: 28px;
-  font-size: 0.8rem;
+.multistep-progress-7 .step-dot,
+.multistep-progress-8 .step-dot,
+.multistep-progress-9 .step-dot {
+  width: 26px;
+  height: 26px;
+  font-size: 0.75rem;
 }
 
-.multistep-progress-7 .step-line {
-  width: 20px;
+.multistep-progress-7 .step-line,
+.multistep-progress-8 .step-line,
+.multistep-progress-9 .step-line {
+  width: 14px;
+}
+
+.upload-photo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.register-profile-preview-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--gray);
+  background: var(--gray);
+}
+
+.form-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--gray-dark);
+}
+
+.preview-summary {
+  margin-bottom: 1rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.preview-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--gray);
+}
+
+.preview-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.preview-section-title {
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--primary);
+}
+
+.preview-dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0.25rem 1rem;
+  font-size: 0.875rem;
+}
+
+.preview-dl dt {
+  margin: 0;
+  color: var(--gray-dark);
+  font-weight: 500;
+}
+
+.preview-dl dd {
+  margin: 0;
 }
 
 .declaration-box {
@@ -623,6 +692,20 @@ label .required {
   display: block;
   width: 120px;
   height: 120px;
+}
+
+.document-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.view-staff-documents dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
 }
 
 .view-staff-details {
