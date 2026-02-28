@@ -84,6 +84,7 @@ $can_edit_profile = $global_edit_enabled && $edit_enabled === 1;
                     <dt>Employee ID</dt><dd><?= esc($staff['employee_id'] ?? '-') ?></dd>
                     <dt>Job title</dt><dd><?= esc($staff['position'] ?? '-') ?></dd>
                     <dt>Department</dt><dd><?= esc($staff['department'] ?? '-') ?></dd>
+                    <dt>Role</dt><dd><?= esc($staff['role'] ?? '-') ?></dd>
                     <dt>Employment type</dt><dd><?= esc($staff['employment_type'] ?? '-') ?></dd>
                     <dt>Start date</dt><dd><?= format_date($staff['date_joined']) ?></dd>
                     <dt>Confirmation date</dt><dd><?= format_date($staff['confirmation_date']) ?></dd>
@@ -98,10 +99,7 @@ $can_edit_profile = $global_edit_enabled && $edit_enabled === 1;
                     <dt>Basic salary</dt><dd><?= esc($staff['basic_salary'] ?? '-') ?></dd>
                     <dt>Housing allowance</dt><dd><?= esc($staff['housing_allowance'] ?? '-') ?></dd>
                     <dt>Transport allowance</dt><dd><?= esc($staff['transport_allowance'] ?? '-') ?></dd>
-                    <dt>Other allowances</dt><dd><?= !empty($staff['other_allowances']) ? nl2br(esc($staff['other_allowances'])) : '-' ?></dd>
                     <dt>Gross monthly salary</dt><dd><?= esc($staff['gross_monthly_salary'] ?? '-') ?></dd>
-                    <dt>Overtime rate</dt><dd><?= esc($staff['overtime_rate'] ?? '-') ?></dd>
-                    <dt>Bonus/Commission structure</dt><dd><?= !empty($staff['bonus_commission_structure']) ? nl2br(esc($staff['bonus_commission_structure'])) : '-' ?></dd>
                 </dl>
             </div>
 
@@ -143,6 +141,7 @@ $can_edit_profile = $global_edit_enabled && $edit_enabled === 1;
                 <h3 class="form-section-title">Statutory &amp; Compliance</h3>
                 <dl class="view-staff-meta">
                     <dt>TIN</dt><dd><?= esc($staff['tax_identification_number'] ?? '-') ?></dd>
+                    <dt>LIRS Tax ID</dt><dd><?= esc($staff['lirs_tax_id'] ?? '-') ?></dd>
                     <dt>PFA</dt><dd><?= esc($staff['pension_fund_administrator'] ?? '-') ?></dd>
                     <dt>Pension PIN</dt><dd><?= esc($staff['pension_pin'] ?? '-') ?></dd>
                     <dt>NHF number</dt><dd><?= esc($staff['nhf_number'] ?? '-') ?></dd>

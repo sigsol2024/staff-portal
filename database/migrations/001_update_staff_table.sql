@@ -29,7 +29,8 @@ CALL add_staff_column_if_not_exists('confirmation_date', 'date DEFAULT NULL AFTE
 CALL add_staff_column_if_not_exists('marital_status', 'varchar(50) DEFAULT NULL AFTER `address`');
 CALL add_staff_column_if_not_exists('employee_id', 'varchar(100) DEFAULT NULL AFTER `position`');
 CALL add_staff_column_if_not_exists('department', 'varchar(255) DEFAULT NULL AFTER `employee_id`');
-CALL add_staff_column_if_not_exists('employment_type', 'varchar(50) DEFAULT NULL COMMENT ''Full-time/Part-time/Contract'' AFTER `department`');
+CALL add_staff_column_if_not_exists('role', 'varchar(50) DEFAULT NULL AFTER `department`');
+CALL add_staff_column_if_not_exists('employment_type', 'varchar(50) DEFAULT NULL COMMENT ''Full-time/Part-time/Contract'' AFTER `role`');
 CALL add_staff_column_if_not_exists('reporting_manager', 'varchar(255) DEFAULT NULL AFTER `employment_type`');
 CALL add_staff_column_if_not_exists('work_location', 'varchar(255) DEFAULT NULL AFTER `reporting_manager`');
 CALL add_staff_column_if_not_exists('basic_salary', 'decimal(12,2) DEFAULT NULL AFTER `work_location`');
@@ -44,7 +45,8 @@ CALL add_staff_column_if_not_exists('account_name', 'varchar(255) DEFAULT NULL A
 CALL add_staff_column_if_not_exists('account_number', 'varchar(100) DEFAULT NULL AFTER `account_name`');
 CALL add_staff_column_if_not_exists('bvn', 'varchar(50) DEFAULT NULL AFTER `account_number`');
 CALL add_staff_column_if_not_exists('tax_identification_number', 'varchar(100) DEFAULT NULL COMMENT ''TIN'' AFTER `bvn`');
-CALL add_staff_column_if_not_exists('pension_fund_administrator', 'varchar(255) DEFAULT NULL AFTER `tax_identification_number`');
+CALL add_staff_column_if_not_exists('lirs_tax_id', 'varchar(100) DEFAULT NULL COMMENT ''LIRS Tax ID'' AFTER `tax_identification_number`');
+CALL add_staff_column_if_not_exists('pension_fund_administrator', 'varchar(255) DEFAULT NULL AFTER `lirs_tax_id`');
 CALL add_staff_column_if_not_exists('pension_pin', 'varchar(100) DEFAULT NULL AFTER `pension_fund_administrator`');
 CALL add_staff_column_if_not_exists('nhf_number', 'varchar(100) DEFAULT NULL AFTER `pension_pin`');
 CALL add_staff_column_if_not_exists('nhis_hmo_provider', 'varchar(255) DEFAULT NULL AFTER `nhf_number`');
@@ -86,6 +88,35 @@ CREATE TABLE IF NOT EXISTS `portal_settings` (
 
 -- Default: allow staff profile editing globally (1 = enabled, 0 = disabled)
 INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('staff_profile_edit_global_enabled', '1');
+-- Default: allowance percentage used for auto-calculated salary components
+INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_allowance_percent', '0');
+-- Two-tier allowance percentages (below 150k, and 150k+)
+INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_allowance_percent_below_150k', '0');
+INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_allowance_percent_150k_up', '0');
+
+-- Enforce unique employee IDs (allows multiple NULLs)
+-- Normalize empty strings to NULL so unique index can be added safely
+UPDATE `staff` SET `employee_id` = NULL WHERE `employee_id` = '';
+
+DELIMITER //
+DROP PROCEDURE IF EXISTS add_staff_unique_index_if_not_exists//
+CREATE PROCEDURE add_staff_unique_index_if_not_exists(
+  IN p_index_name VARCHAR(64),
+  IN p_columns VARCHAR(255)
+)
+BEGIN
+  IF (SELECT COUNT(*) FROM information_schema.STATISTICS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'staff' AND INDEX_NAME = p_index_name) = 0 THEN
+    SET @sql = CONCAT('ALTER TABLE `staff` ADD UNIQUE KEY `', p_index_name, '` (', p_columns, ')');
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+  END IF;
+END//
+DELIMITER ;
+
+CALL add_staff_unique_index_if_not_exists('uniq_employee_id', '`employee_id`');
+DROP PROCEDURE IF EXISTS add_staff_unique_index_if_not_exists;
 
 -- Admin/Manager roles (admin = full access; manager = cannot edit/create staff or create admin/manager)
 DELIMITER //

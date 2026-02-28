@@ -24,6 +24,11 @@ if (!$staff) {
 }
 
 $error = '';
+$salary_allowance_percent_below_150k = (float) (get_portal_setting('salary_allowance_percent_below_150k', '0') ?? '0');
+$salary_allowance_percent_150k_up = (float) (get_portal_setting('salary_allowance_percent_150k_up', '0') ?? '0');
+$salary_allowance_percent_below_150k = max(0, min(100, $salary_allowance_percent_below_150k));
+$salary_allowance_percent_150k_up = max(0, min(100, $salary_allowance_percent_150k_up));
+$salary_allowance_threshold = 150000.0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validate_csrf($_POST['csrf_token'] ?? '')) {
@@ -46,13 +51,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $marital_status = $t($_POST['marital_status'] ?? '');
             $employee_id = $t($_POST['employee_id'] ?? '');
             $department = $t($_POST['department'] ?? '');
+            $role = $t($_POST['role'] ?? '');
             $employment_type = $t($_POST['employment_type'] ?? '');
             $confirmation_date = $t($_POST['confirmation_date'] ?? '');
             $reporting_manager = $t($_POST['reporting_manager'] ?? '');
             $work_location = $t($_POST['work_location'] ?? '');
-            $other_allowances = $t($_POST['other_allowances'] ?? '');
-            $overtime_rate = $t($_POST['overtime_rate'] ?? '');
-            $bonus_commission_structure = $t($_POST['bonus_commission_structure'] ?? '');
+            // These fields are no longer used (auto-calculated salary setup)
+            $other_allowances = null;
+            $overtime_rate = null;
+            $bonus_commission_structure = null;
             $bank_name = $t($_POST['bank_name'] ?? '');
             $account_name = $t($_POST['account_name'] ?? '');
             $account_number = $t($_POST['account_number'] ?? '');
@@ -70,14 +77,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $exit_termination_date = $t($_POST['exit_termination_date'] ?? '') ?: null;
             $decimal = function($v) { $v = trim($v ?? ''); return $v === '' ? null : (is_numeric($v) ? $v : null); };
             $basic_salary = $decimal($_POST['basic_salary'] ?? '');
-            $housing_allowance = $decimal($_POST['housing_allowance'] ?? '');
-            $transport_allowance = $decimal($_POST['transport_allowance'] ?? '');
-            $gross_monthly_salary = $decimal($_POST['gross_monthly_salary'] ?? '');
+            $housing_allowance = null;
+            $transport_allowance = null;
+            $gross_monthly_salary = null;
+            if ($basic_salary !== null) {
+                $pct = salary_allowance_percent_for_basic((float)$basic_salary);
+                $housing_allowance = round(((float)$basic_salary) * ($pct / 100), 2);
+                $transport_allowance = round(((float)$basic_salary) * ($pct / 100), 2);
+                $gross_monthly_salary = round(((float)$basic_salary) + $housing_allowance + $transport_allowance, 2);
+            }
 
             if (empty($email) || empty($full_name)) {
                 $error = 'Email and full name are required.';
             } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $error = 'Invalid email address.';
+            } elseif (empty($department) || empty($role)) {
+                $error = 'Department and role are required.';
             } else {
                 $stmt = $pdo->prepare("SELECT id FROM staff WHERE email = ? AND id != ?");
                 $stmt->execute([$email, $id]);
@@ -86,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $stmt = $pdo->prepare("
                         UPDATE staff SET email = ?, full_name = ?, date_of_birth = ?, date_joined = ?, position = ?, biography = ?, phone_number = ?, gender = ?, address = ?, status = ?,
-                        marital_status = ?, employee_id = ?, department = ?, employment_type = ?, confirmation_date = ?, reporting_manager = ?, work_location = ?,
+                        marital_status = ?, employee_id = ?, department = ?, role = ?, employment_type = ?, confirmation_date = ?, reporting_manager = ?, work_location = ?,
                         basic_salary = ?, housing_allowance = ?, transport_allowance = ?, other_allowances = ?, gross_monthly_salary = ?, overtime_rate = ?, bonus_commission_structure = ?,
                         bank_name = ?, account_name = ?, account_number = ?, bvn = ?,
                         tax_identification_number = ?, pension_fund_administrator = ?, pension_pin = ?, nhf_number = ?, nhis_hmo_provider = ?, employee_contribution_percentages = ?,
@@ -94,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         WHERE id = ?
                     ");
                     $stmt->execute([$email, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address, $status,
-                        $marital_status, $employee_id, $department, $employment_type, $confirmation_date, $reporting_manager, $work_location,
+                        $marital_status, $employee_id, $department, $role, $employment_type, $confirmation_date, $reporting_manager, $work_location,
                         $basic_salary, $housing_allowance, $transport_allowance, $other_allowances, $gross_monthly_salary, $overtime_rate, $bonus_commission_structure,
                         $bank_name, $account_name, $account_number, $bvn,
                         $tax_identification_number, $pension_fund_administrator, $pension_pin, $nhf_number, $nhis_hmo_provider, $employee_contribution_percentages,
@@ -252,8 +267,24 @@ $flash = get_flash();
                             <input type="text" id="employee_id" name="employee_id" class="form-control" value="<?= esc($staff['employee_id'] ?? '') ?>">
                         </div>
                         <div class="form-group">
-                            <label for="department">Department</label>
-                            <input type="text" id="department" name="department" class="form-control" value="<?= esc($staff['department'] ?? '') ?>">
+                            <label for="department">Department *</label>
+                            <select id="department" name="department" class="form-control" required>
+                                <option value="">— Select —</option>
+                                <option value="Admin" <?= ($staff['department'] ?? '') === 'Admin' ? 'selected' : '' ?>>Admin</option>
+                                <option value="Account" <?= ($staff['department'] ?? '') === 'Account' ? 'selected' : '' ?>>Account</option>
+                                <option value="Technical Services" <?= ($staff['department'] ?? '') === 'Technical Services' ? 'selected' : '' ?>>Technical Services</option>
+                                <option value="Software/Cloud Service" <?= ($staff['department'] ?? '') === 'Software/Cloud Service' ? 'selected' : '' ?>>Software/Cloud Service</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Role *</label>
+                            <select id="role" name="role" class="form-control" required>
+                                <option value="">— Select —</option>
+                                <option value="Manager" <?= ($staff['role'] ?? '') === 'Manager' ? 'selected' : '' ?>>Manager</option>
+                                <option value="Supervisor" <?= ($staff['role'] ?? '') === 'Supervisor' ? 'selected' : '' ?>>Supervisor</option>
+                                <option value="Staff" <?= ($staff['role'] ?? '') === 'Staff' ? 'selected' : '' ?>>Staff</option>
+                                <option value="Rank and file" <?= ($staff['role'] ?? '') === 'Rank and file' ? 'selected' : '' ?>>Rank and file</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="employment_type">Employment type</label>
@@ -299,27 +330,15 @@ $flash = get_flash();
                         </div>
                         <div class="form-group">
                             <label for="housing_allowance">Housing allowance</label>
-                            <input type="number" id="housing_allowance" name="housing_allowance" class="form-control" step="0.01" min="0" value="<?= esc($staff['housing_allowance'] ?? '') ?>">
+                            <input type="number" id="housing_allowance" name="housing_allowance" class="form-control" step="0.01" min="0" readonly value="<?= esc($staff['housing_allowance'] ?? '') ?>">
                         </div>
                         <div class="form-group">
                             <label for="transport_allowance">Transport allowance</label>
-                            <input type="number" id="transport_allowance" name="transport_allowance" class="form-control" step="0.01" min="0" value="<?= esc($staff['transport_allowance'] ?? '') ?>">
+                            <input type="number" id="transport_allowance" name="transport_allowance" class="form-control" step="0.01" min="0" readonly value="<?= esc($staff['transport_allowance'] ?? '') ?>">
                         </div>
                         <div class="form-group">
                             <label for="gross_monthly_salary">Gross monthly salary</label>
-                            <input type="number" id="gross_monthly_salary" name="gross_monthly_salary" class="form-control" step="0.01" min="0" value="<?= esc($staff['gross_monthly_salary'] ?? '') ?>">
-                        </div>
-                        <div class="form-group form-group-full">
-                            <label for="other_allowances">Other allowances</label>
-                            <textarea id="other_allowances" name="other_allowances" class="form-control" rows="1"><?= esc($staff['other_allowances'] ?? '') ?></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="overtime_rate">Overtime rate</label>
-                            <input type="text" id="overtime_rate" name="overtime_rate" class="form-control" value="<?= esc($staff['overtime_rate'] ?? '') ?>">
-                        </div>
-                        <div class="form-group form-group-full">
-                            <label for="bonus_commission_structure">Bonus/Commission structure</label>
-                            <textarea id="bonus_commission_structure" name="bonus_commission_structure" class="form-control" rows="1"><?= esc($staff['bonus_commission_structure'] ?? '') ?></textarea>
+                            <input type="number" id="gross_monthly_salary" name="gross_monthly_salary" class="form-control" step="0.01" min="0" readonly value="<?= esc($staff['gross_monthly_salary'] ?? '') ?>">
                         </div>
                         <div class="form-group">
                             <label for="bank_name">Bank name</label>
@@ -424,6 +443,40 @@ $flash = get_flash();
                     r.readAsDataURL(f);
                 } else if (!f) img.src = defSrc;
             });
+
+            function syncSalaryFields() {
+                var pctLow = <?= json_encode($salary_allowance_percent_below_150k) ?>;
+                var pctHigh = <?= json_encode($salary_allowance_percent_150k_up) ?>;
+                var threshold = <?= json_encode($salary_allowance_threshold) ?>;
+                if (!isFinite(pctLow)) pctLow = 0;
+                if (!isFinite(pctHigh)) pctHigh = 0;
+                if (!isFinite(threshold)) threshold = 150000;
+                pctLow = Math.max(0, Math.min(100, pctLow));
+                pctHigh = Math.max(0, Math.min(100, pctHigh));
+                var basicEl = document.getElementById('basic_salary');
+                var houseEl = document.getElementById('housing_allowance');
+                var transEl = document.getElementById('transport_allowance');
+                var grossEl = document.getElementById('gross_monthly_salary');
+                if (!basicEl || !houseEl || !transEl || !grossEl) return;
+                var basic = parseFloat((basicEl.value || '').toString().replace(/,/g, ''));
+                if (!isFinite(basic)) {
+                    houseEl.value = '';
+                    transEl.value = '';
+                    grossEl.value = '';
+                    return;
+                }
+                var pct = (basic >= threshold) ? pctHigh : pctLow;
+                var allowance = (basic * (pct / 100));
+                var housing = Math.round(allowance * 100) / 100;
+                var transport = Math.round(allowance * 100) / 100;
+                var gross = Math.round((basic + housing + transport) * 100) / 100;
+                houseEl.value = housing.toFixed(2);
+                transEl.value = transport.toFixed(2);
+                grossEl.value = gross.toFixed(2);
+            }
+            var basicSalaryEl = document.getElementById('basic_salary');
+            if (basicSalaryEl) basicSalaryEl.addEventListener('input', syncSalaryFields);
+            syncSalaryFields();
         })();
     </script>
     <script src="<?= BASE_URL ?>/assets/js/script.js"></script>

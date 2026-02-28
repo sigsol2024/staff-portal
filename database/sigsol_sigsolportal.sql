@@ -108,6 +108,7 @@ CREATE TABLE `staff` (
   `locked_until` datetime DEFAULT NULL,
   `employee_id` varchar(100) DEFAULT NULL,
   `department` varchar(255) DEFAULT NULL,
+  `role` varchar(50) DEFAULT NULL,
   `employment_type` varchar(50) DEFAULT NULL COMMENT 'Full-time/Part-time/Contract',
   `reporting_manager` varchar(255) DEFAULT NULL,
   `work_location` varchar(255) DEFAULT NULL,
@@ -123,6 +124,7 @@ CREATE TABLE `staff` (
   `account_number` varchar(100) DEFAULT NULL,
   `bvn` varchar(50) DEFAULT NULL,
   `tax_identification_number` varchar(100) DEFAULT NULL COMMENT 'TIN',
+  `lirs_tax_id` varchar(100) DEFAULT NULL COMMENT 'LIRS Tax ID',
   `pension_fund_administrator` varchar(255) DEFAULT NULL,
   `pension_pin` varchar(100) DEFAULT NULL,
   `nhf_number` varchar(100) DEFAULT NULL,
@@ -166,7 +168,10 @@ CREATE TABLE `portal_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `portal_settings` (`key`, `value`) VALUES
-('staff_profile_edit_global_enabled', '1');
+('staff_profile_edit_global_enabled', '1'),
+('salary_allowance_percent', '0'),
+('salary_allowance_percent_below_150k', '0'),
+('salary_allowance_percent_150k_up', '0');
 
 --
 -- Dumping data for table `staff`
@@ -207,7 +212,8 @@ ALTER TABLE `password_reset_tokens`
 --
 ALTER TABLE `staff`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `uniq_employee_id` (`employee_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables

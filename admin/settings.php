@@ -83,12 +83,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
             }
+        } elseif ($action === 'salary_settings') {
+            if (!is_admin_role()) {
+                $error = 'You do not have permission to change global settings.';
+            } else {
+                $pct_low_raw = trim($_POST['salary_allowance_percent_below_150k'] ?? '');
+                $pct_high_raw = trim($_POST['salary_allowance_percent_150k_up'] ?? '');
+                if ($pct_low_raw === '' || !is_numeric($pct_low_raw) || $pct_high_raw === '' || !is_numeric($pct_high_raw)) {
+                    $error = 'Both allowance percentage fields must be numbers between 0 and 100.';
+                } else {
+                    $pct_low = (float) $pct_low_raw;
+                    $pct_high = (float) $pct_high_raw;
+                    if ($pct_low < 0 || $pct_low > 100 || $pct_high < 0 || $pct_high > 100) {
+                        $error = 'Allowance percentages must be between 0 and 100.';
+                    } else {
+                        $low_str = rtrim(rtrim(number_format($pct_low, 2, '.', ''), '0'), '.');
+                        $high_str = rtrim(rtrim(number_format($pct_high, 2, '.', ''), '0'), '.');
+                        if ($low_str === '') $low_str = '0';
+                        if ($high_str === '') $high_str = '0';
+                        if (
+                            !set_portal_setting('salary_allowance_percent_below_150k', $low_str) ||
+                            !set_portal_setting('salary_allowance_percent_150k_up', $high_str)
+                        ) {
+                            $error = 'Could not update salary setting. Ensure database schema is up to date.';
+                        } else {
+                            set_flash('success', 'Salary allowance percentages have been updated.');
+                            header('Location: ' . BASE_URL . '/admin/settings.php');
+                            exit;
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 $flash = get_flash();
 $global_edit_enabled = (get_portal_setting('staff_profile_edit_global_enabled', '1') ?? '1') === '1';
+$salary_allowance_percent_below_150k = (float) (get_portal_setting('salary_allowance_percent_below_150k', '0') ?? '0');
+$salary_allowance_percent_150k_up = (float) (get_portal_setting('salary_allowance_percent_150k_up', '0') ?? '0');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -169,6 +202,53 @@ $global_edit_enabled = (get_portal_setting('staff_profile_edit_global_enabled', 
                     </div>
                     <?php if (is_admin_role()): ?>
                         <button type="submit" class="btn btn-primary" onclick="return confirm('Apply this change globally for all staff?');">Save</button>
+                    <?php else: ?>
+                        <p class="form-hint">Only full admins can change this setting.</p>
+                    <?php endif; ?>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Salary Settings</h2>
+                </div>
+                <p class="form-hint">Set tiered allowance percentages used to auto-calculate Housing Allowance and Transport Allowance from Basic Salary. Gross Monthly Salary is auto-calculated as Basic + Housing + Transport.</p>
+                <form method="POST">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="salary_settings">
+                    <div class="form-group">
+                        <label for="salary_allowance_percent_below_150k">Allowance percentage (Basic salary below 150,000) (%) <span class="required">*</span></label>
+                        <input
+                            type="number"
+                            id="salary_allowance_percent_below_150k"
+                            name="salary_allowance_percent_below_150k"
+                            class="form-control"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            required
+                            value="<?= esc((string)$salary_allowance_percent_below_150k) ?>"
+                            <?= is_admin_role() ? '' : 'disabled' ?>
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="salary_allowance_percent_150k_up">Allowance percentage (Basic salary 150,000 and above) (%) <span class="required">*</span></label>
+                        <input
+                            type="number"
+                            id="salary_allowance_percent_150k_up"
+                            name="salary_allowance_percent_150k_up"
+                            class="form-control"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            required
+                            value="<?= esc((string)$salary_allowance_percent_150k_up) ?>"
+                            <?= is_admin_role() ? '' : 'disabled' ?>
+                        >
+                        <span class="form-hint">Example: 25 means each allowance = Basic Salary × 25% for that tier.</span>
+                    </div>
+                    <?php if (is_admin_role()): ?>
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('Update salary allowance percentage? This affects auto-calculation going forward.');">Save</button>
                     <?php else: ?>
                         <p class="form-hint">Only full admins can change this setting.</p>
                     <?php endif; ?>

@@ -100,3 +100,20 @@ function set_portal_setting(string $key, string $value): bool
         return false;
     }
 }
+
+/**
+ * Salary allowance percent selector (two-tier rule):
+ * - Basic salary < 150,000 => uses salary_allowance_percent_below_150k
+ * - Basic salary >= 150,000 => uses salary_allowance_percent_150k_up
+ */
+function salary_allowance_percent_for_basic(?float $basic_salary): float
+{
+    if ($basic_salary === null) return 0.0;
+    $threshold = 150000.0;
+    $key = ($basic_salary >= $threshold) ? 'salary_allowance_percent_150k_up' : 'salary_allowance_percent_below_150k';
+    $raw = get_portal_setting($key, '0') ?? '0';
+    $pct = is_numeric($raw) ? (float) $raw : 0.0;
+    if ($pct < 0) $pct = 0.0;
+    if ($pct > 100) $pct = 100.0;
+    return $pct;
+}
