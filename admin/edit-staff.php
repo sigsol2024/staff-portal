@@ -72,20 +72,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $bank_detail_update = $t($_POST['bank_detail_update'] ?? '');
             $exit_termination_date = $t($_POST['exit_termination_date'] ?? '') ?: null;
             $decimal = function($v) { $v = trim($v ?? ''); return $v === '' ? null : (is_numeric($v) ? $v : null); };
-            $basic_salary = $decimal($_POST['basic_salary'] ?? '');
-            $housing_allowance = null;
-            $transport_allowance = null;
-            $telephone_allowance = null;
-            $other_allowance = null;
-            $gross_monthly_salary = null;
-            if ($basic_salary !== null) {
-                $breakdown = compute_salary_breakdown_from_basic((float) $basic_salary);
-                $housing_allowance = $breakdown['housing_allowance'];
-                $transport_allowance = $breakdown['transport_allowance'];
-                $telephone_allowance = $breakdown['telephone_allowance'];
-                $other_allowance = $breakdown['other_allowance'];
-                $gross_monthly_salary = $breakdown['gross_monthly_salary'];
-            }
+            $total_salary = $decimal($_POST['total_salary'] ?? '');
+            $breakdown = compute_salary_breakdown_from_gross($total_salary !== null ? (float)$total_salary : null);
+            $gross_monthly_salary = $breakdown['gross_monthly_salary'];
+            $basic_salary = $breakdown['basic_salary'];
+            $housing_allowance = $breakdown['housing_allowance'];
+            $transport_allowance = $breakdown['transport_allowance'];
+            $telephone_allowance = $breakdown['telephone_allowance'];
+            $other_allowance = $breakdown['other_allowance'];
 
             if (empty($email) || empty($full_name)) {
                 $error = 'Email and full name are required.';
@@ -325,8 +319,12 @@ $flash = get_flash();
 
                         <h3 class="form-section-title">Salary &amp; Bank</h3>
                         <div class="form-group">
+                            <label for="total_salary">Total salary (Gross)</label>
+                            <input type="number" id="total_salary" name="total_salary" class="form-control" step="0.01" min="0" value="<?= esc($staff['gross_monthly_salary'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
                             <label for="basic_salary">Basic salary</label>
-                            <input type="number" id="basic_salary" name="basic_salary" class="form-control" step="0.01" min="0" value="<?= esc($staff['basic_salary'] ?? '') ?>">
+                            <input type="number" id="basic_salary" name="basic_salary" class="form-control" step="0.01" min="0" readonly value="<?= esc($staff['basic_salary'] ?? '') ?>">
                         </div>
                         <div class="form-group">
                             <label for="housing_allowance">Housing allowance</label>
@@ -463,15 +461,17 @@ $flash = get_flash();
                 pctTransport = Math.max(0, Math.min(100, pctTransport));
                 pctTelephone = Math.max(0, Math.min(100, pctTelephone));
                 pctOther = Math.max(0, Math.min(100, pctOther));
+                var totalEl = document.getElementById('total_salary');
                 var basicEl = document.getElementById('basic_salary');
                 var houseEl = document.getElementById('housing_allowance');
                 var transEl = document.getElementById('transport_allowance');
                 var telEl = document.getElementById('telephone_allowance');
                 var otherEl = document.getElementById('other_allowance');
                 var grossEl = document.getElementById('gross_monthly_salary');
-                if (!basicEl || !houseEl || !transEl || !telEl || !otherEl || !grossEl) return;
-                var basic = parseFloat((basicEl.value || '').toString().replace(/,/g, ''));
-                if (!isFinite(basic)) {
+                if (!totalEl || !basicEl || !houseEl || !transEl || !telEl || !otherEl || !grossEl) return;
+                var total = parseFloat((totalEl.value || '').toString().replace(/,/g, ''));
+                if (!isFinite(total)) {
+                    basicEl.value = '';
                     houseEl.value = '';
                     transEl.value = '';
                     telEl.value = '';
@@ -479,28 +479,21 @@ $flash = get_flash();
                     grossEl.value = '';
                     return;
                 }
-                if (!pctBasic) {
-                    houseEl.value = '';
-                    transEl.value = '';
-                    telEl.value = '';
-                    otherEl.value = '';
-                    grossEl.value = '';
-                    return;
-                }
-                var total = basic / (pctBasic / 100);
                 var housing = Math.round((total * (pctHousing / 100)) * 100) / 100;
                 var transport = Math.round((total * (pctTransport / 100)) * 100) / 100;
                 var telephone = Math.round((total * (pctTelephone / 100)) * 100) / 100;
                 var other = Math.round((total * (pctOther / 100)) * 100) / 100;
                 var gross = Math.round(total * 100) / 100;
+                var basic = Math.round((total * (pctBasic / 100)) * 100) / 100;
+                basicEl.value = basic.toFixed(2);
                 houseEl.value = housing.toFixed(2);
                 transEl.value = transport.toFixed(2);
                 telEl.value = telephone.toFixed(2);
                 otherEl.value = other.toFixed(2);
                 grossEl.value = gross.toFixed(2);
             }
-            var basicSalaryEl = document.getElementById('basic_salary');
-            if (basicSalaryEl) basicSalaryEl.addEventListener('input', syncSalaryFields);
+            var totalSalaryEl = document.getElementById('total_salary');
+            if (totalSalaryEl) totalSalaryEl.addEventListener('input', syncSalaryFields);
             syncSalaryFields();
         })();
     </script>

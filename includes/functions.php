@@ -163,3 +163,34 @@ function compute_salary_breakdown_from_basic(?float $basic_salary): array
         'gross_monthly_salary' => $gross,
     ];
 }
+
+/**
+ * Compute salary breakdown from Gross/Total Salary using configured percentages.
+ * Gross is the main salary figure; components are computed as portions of gross.
+ */
+function compute_salary_breakdown_from_gross(?float $gross_salary): array
+{
+    $p = get_salary_percent_settings();
+    if ($gross_salary === null || $gross_salary < 0) {
+        return [
+            'gross_monthly_salary' => null,
+            'basic_salary' => null,
+            'housing_allowance' => null,
+            'transport_allowance' => null,
+            'telephone_allowance' => null,
+            'other_allowance' => null,
+        ];
+    }
+
+    $gross = (float) $gross_salary;
+    $round2 = function(float $v): float { return round($v, 2); };
+
+    return [
+        'gross_monthly_salary' => $round2($gross),
+        'basic_salary' => $round2($gross * ((float)($p['basic'] ?? 0.0) / 100.0)),
+        'housing_allowance' => $round2($gross * ((float)($p['housing'] ?? 0.0) / 100.0)),
+        'transport_allowance' => $round2($gross * ((float)($p['transport'] ?? 0.0) / 100.0)),
+        'telephone_allowance' => $round2($gross * ((float)($p['telephone'] ?? 0.0) / 100.0)),
+        'other_allowance' => $round2($gross * ((float)($p['other'] ?? 0.0) / 100.0)),
+    ];
+}
