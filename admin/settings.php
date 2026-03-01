@@ -87,27 +87,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!is_admin_role()) {
                 $error = 'You do not have permission to change global settings.';
             } else {
-                $pct_low_raw = trim($_POST['salary_allowance_percent_below_150k'] ?? '');
-                $pct_high_raw = trim($_POST['salary_allowance_percent_150k_up'] ?? '');
-                if ($pct_low_raw === '' || !is_numeric($pct_low_raw) || $pct_high_raw === '' || !is_numeric($pct_high_raw)) {
-                    $error = 'Both allowance percentage fields must be numbers between 0 and 100.';
-                } else {
-                    $pct_low = (float) $pct_low_raw;
-                    $pct_high = (float) $pct_high_raw;
-                    if ($pct_low < 0 || $pct_low > 100 || $pct_high < 0 || $pct_high > 100) {
-                        $error = 'Allowance percentages must be between 0 and 100.';
+                $fields = [
+                    'basic' => 'salary_pct_basic',
+                    'housing' => 'salary_pct_housing',
+                    'transport' => 'salary_pct_transport',
+                    'telephone' => 'salary_pct_telephone',
+                    'other' => 'salary_pct_other',
+                ];
+
+                $vals = [];
+                foreach ($fields as $label => $key) {
+                    $raw = trim($_POST[$key] ?? '');
+                    if ($raw === '' || !is_numeric($raw)) {
+                        $error = 'All salary percentage fields must be numbers between 0 and 100.';
+                        break;
+                    }
+                    $pct = (float) $raw;
+                    if ($pct < 0 || $pct > 100) {
+                        $error = 'All salary percentage fields must be between 0 and 100.';
+                        break;
+                    }
+                    $vals[$key] = $pct;
+                }
+
+                if (!$error) {
+                    $sum = array_sum($vals);
+                    if (abs($sum - 100.0) > 0.01) {
+                        $error = 'Salary percentages must add up to 100%. Current total is ' . rtrim(rtrim(number_format($sum, 2, '.', ''), '0'), '.') . '%.';
                     } else {
-                        $low_str = rtrim(rtrim(number_format($pct_low, 2, '.', ''), '0'), '.');
-                        $high_str = rtrim(rtrim(number_format($pct_high, 2, '.', ''), '0'), '.');
-                        if ($low_str === '') $low_str = '0';
-                        if ($high_str === '') $high_str = '0';
-                        if (
-                            !set_portal_setting('salary_allowance_percent_below_150k', $low_str) ||
-                            !set_portal_setting('salary_allowance_percent_150k_up', $high_str)
-                        ) {
-                            $error = 'Could not update salary setting. Ensure database schema is up to date.';
+                        $ok = true;
+                        foreach ($vals as $key => $pct) {
+                            $pct_str = rtrim(rtrim(number_format($pct, 2, '.', ''), '0'), '.');
+                            if ($pct_str === '') $pct_str = '0';
+                            if (!set_portal_setting($key, $pct_str)) {
+                                $ok = false;
+                                break;
+                            }
+                        }
+                        if (!$ok) {
+                            $error = 'Could not update salary settings. Ensure database schema is up to date.';
                         } else {
-                            set_flash('success', 'Salary allowance percentages have been updated.');
+                            set_flash('success', 'Salary percentages have been updated.');
                             header('Location: ' . BASE_URL . '/admin/settings.php');
                             exit;
                         }
@@ -120,8 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $flash = get_flash();
 $global_edit_enabled = (get_portal_setting('staff_profile_edit_global_enabled', '1') ?? '1') === '1';
-$salary_allowance_percent_below_150k = (float) (get_portal_setting('salary_allowance_percent_below_150k', '0') ?? '0');
-$salary_allowance_percent_150k_up = (float) (get_portal_setting('salary_allowance_percent_150k_up', '0') ?? '0');
+$salary_pcts = get_salary_percent_settings();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -212,43 +231,37 @@ $salary_allowance_percent_150k_up = (float) (get_portal_setting('salary_allowanc
                 <div class="card-header">
                     <h2>Salary Settings</h2>
                 </div>
-                <p class="form-hint">Set tiered allowance percentages used to auto-calculate Housing Allowance and Transport Allowance from Basic Salary. Gross Monthly Salary is auto-calculated as Basic + Housing + Transport.</p>
+                <p class="form-hint">Configure what percentage of Gross Monthly Salary goes to each component. These percentages are used to auto-calculate salary fields from Basic Salary. Total must be 100%.</p>
                 <form method="POST">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="salary_settings">
                     <div class="form-group">
-                        <label for="salary_allowance_percent_below_150k">Allowance percentage (Basic salary below 150,000) (%) <span class="required">*</span></label>
-                        <input
-                            type="number"
-                            id="salary_allowance_percent_below_150k"
-                            name="salary_allowance_percent_below_150k"
-                            class="form-control"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            required
-                            value="<?= esc((string)$salary_allowance_percent_below_150k) ?>"
-                            <?= is_admin_role() ? '' : 'disabled' ?>
-                        >
+                        <label for="salary_pct_basic">Basic salary (%) <span class="required">*</span></label>
+                        <input type="number" id="salary_pct_basic" name="salary_pct_basic" class="form-control" min="0" max="100" step="0.01" required
+                               value="<?= esc((string)($salary_pcts['basic'] ?? 0)) ?>" <?= is_admin_role() ? '' : 'disabled' ?>>
                     </div>
                     <div class="form-group">
-                        <label for="salary_allowance_percent_150k_up">Allowance percentage (Basic salary 150,000 and above) (%) <span class="required">*</span></label>
-                        <input
-                            type="number"
-                            id="salary_allowance_percent_150k_up"
-                            name="salary_allowance_percent_150k_up"
-                            class="form-control"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            required
-                            value="<?= esc((string)$salary_allowance_percent_150k_up) ?>"
-                            <?= is_admin_role() ? '' : 'disabled' ?>
-                        >
-                        <span class="form-hint">Example: 25 means each allowance = Basic Salary × 25% for that tier.</span>
+                        <label for="salary_pct_housing">Housing allowance (%) <span class="required">*</span></label>
+                        <input type="number" id="salary_pct_housing" name="salary_pct_housing" class="form-control" min="0" max="100" step="0.01" required
+                               value="<?= esc((string)($salary_pcts['housing'] ?? 0)) ?>" <?= is_admin_role() ? '' : 'disabled' ?>>
+                    </div>
+                    <div class="form-group">
+                        <label for="salary_pct_transport">Transport allowance (%) <span class="required">*</span></label>
+                        <input type="number" id="salary_pct_transport" name="salary_pct_transport" class="form-control" min="0" max="100" step="0.01" required
+                               value="<?= esc((string)($salary_pcts['transport'] ?? 0)) ?>" <?= is_admin_role() ? '' : 'disabled' ?>>
+                    </div>
+                    <div class="form-group">
+                        <label for="salary_pct_telephone">Telephone allowance (%) <span class="required">*</span></label>
+                        <input type="number" id="salary_pct_telephone" name="salary_pct_telephone" class="form-control" min="0" max="100" step="0.01" required
+                               value="<?= esc((string)($salary_pcts['telephone'] ?? 0)) ?>" <?= is_admin_role() ? '' : 'disabled' ?>>
+                    </div>
+                    <div class="form-group">
+                        <label for="salary_pct_other">Other allowance (%) <span class="required">*</span></label>
+                        <input type="number" id="salary_pct_other" name="salary_pct_other" class="form-control" min="0" max="100" step="0.01" required
+                               value="<?= esc((string)($salary_pcts['other'] ?? 0)) ?>" <?= is_admin_role() ? '' : 'disabled' ?>>
                     </div>
                     <?php if (is_admin_role()): ?>
-                        <button type="submit" class="btn btn-primary" onclick="return confirm('Update salary allowance percentage? This affects auto-calculation going forward.');">Save</button>
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('Update salary percentages? This affects auto-calculation going forward.');">Save</button>
                     <?php else: ?>
                         <p class="form-hint">Only full admins can change this setting.</p>
                     <?php endif; ?>

@@ -31,16 +31,14 @@ function generate_unique_employee_id(PDO $pdo): string
     return strtoupper(bin2hex(random_bytes(4)));
 }
 
-if (empty($_SESSION['reg_employee_id'])) {
+// Ensure we always have a valid 8-char Employee ID in-session for this registration flow
+$existing_employee_id = $_SESSION['reg_employee_id'] ?? '';
+if (!is_string($existing_employee_id) || !preg_match('/^[A-Z0-9]{8}$/', $existing_employee_id)) {
     $_SESSION['reg_employee_id'] = generate_unique_employee_id($pdo);
 }
 
 $error = '';
-$salary_allowance_percent_below_150k = (float) (get_portal_setting('salary_allowance_percent_below_150k', '0') ?? '0');
-$salary_allowance_percent_150k_up = (float) (get_portal_setting('salary_allowance_percent_150k_up', '0') ?? '0');
-$salary_allowance_percent_below_150k = max(0, min(100, $salary_allowance_percent_below_150k));
-$salary_allowance_percent_150k_up = max(0, min(100, $salary_allowance_percent_150k_up));
-$salary_allowance_threshold = 150000.0;
+$salary_pcts = get_salary_percent_settings();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validate_csrf($_POST['csrf_token'] ?? '')) {
@@ -93,18 +91,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $decimal = function($v) { $v = trim($v ?? ''); return $v === '' ? null : (is_numeric($v) ? $v : null); };
         $basic_salary = $decimal($_POST['basic_salary'] ?? '');
-        // Auto-calculate allowances and gross from Basic Salary + global percentage
+        // Auto-calculate salary components from Basic Salary + percentage settings
         $housing_allowance = null;
         $transport_allowance = null;
+        $telephone_allowance = null;
+        $other_allowance = null;
         $gross_monthly_salary = null;
         if ($basic_salary !== null) {
-            $pct = salary_allowance_percent_for_basic((float)$basic_salary);
-            $housing_allowance = round(((float)$basic_salary) * ($pct / 100), 2);
-            $transport_allowance = round(((float)$basic_salary) * ($pct / 100), 2);
-            $gross_monthly_salary = round(((float)$basic_salary) + $housing_allowance + $transport_allowance, 2);
-            $_POST['housing_allowance'] = number_format($housing_allowance, 2, '.', '');
-            $_POST['transport_allowance'] = number_format($transport_allowance, 2, '.', '');
-            $_POST['gross_monthly_salary'] = number_format($gross_monthly_salary, 2, '.', '');
+            $breakdown = compute_salary_breakdown_from_basic((float) $basic_salary);
+            $housing_allowance = $breakdown['housing_allowance'];
+            $transport_allowance = $breakdown['transport_allowance'];
+            $telephone_allowance = $breakdown['telephone_allowance'];
+            $other_allowance = $breakdown['other_allowance'];
+            $gross_monthly_salary = $breakdown['gross_monthly_salary'];
+            $_POST['housing_allowance'] = $housing_allowance !== null ? number_format((float)$housing_allowance, 2, '.', '') : '';
+            $_POST['transport_allowance'] = $transport_allowance !== null ? number_format((float)$transport_allowance, 2, '.', '') : '';
+            $_POST['telephone_allowance'] = $telephone_allowance !== null ? number_format((float)$telephone_allowance, 2, '.', '') : '';
+            $_POST['other_allowance'] = $other_allowance !== null ? number_format((float)$other_allowance, 2, '.', '') : '';
+            $_POST['gross_monthly_salary'] = $gross_monthly_salary !== null ? number_format((float)$gross_monthly_salary, 2, '.', '') : '';
         }
 
         $bvn_confirm = $t($_POST['bvn_confirm'] ?? '');
@@ -153,13 +157,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
                 $sql = "INSERT INTO staff (email, password, full_name, date_of_birth, date_joined, position, biography, phone_number, gender, address, profile_image, cv_path, nin_document_path, status,
                     marital_status, employee_id, department, role, employment_type, confirmation_date, reporting_manager, work_location,
-                    basic_salary, housing_allowance, transport_allowance, other_allowances, gross_monthly_salary, overtime_rate, bonus_commission_structure,
+                    basic_salary, housing_allowance, transport_allowance, telephone_allowance, other_allowance, other_allowances, gross_monthly_salary, overtime_rate, bonus_commission_structure,
                     bank_name, account_name, account_number, bvn,
                     lirs_tax_id, tax_identification_number, pension_fund_administrator, pension_pin, nhf_number, nhis_hmo_provider, employee_contribution_percentages,
                     new_hire, exit_termination_date, salary_adjustment_notes, promotion_role_change, bank_detail_update, declaration_accepted, email_verified)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active',
                     ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?,
                     ?, ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?, 1, 0)";
@@ -168,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->execute([
                         $email, $hash, $full_name, $date_of_birth, $date_joined, $position, $biography, $phone_number, $gender, $address, $profile_image, $cv_path, $nin_path,
                         $marital_status, $employee_id, $department, $role, $employment_type, $confirmation_date, $reporting_manager, $work_location,
-                        $basic_salary, $housing_allowance, $transport_allowance, $other_allowances, $gross_monthly_salary, $overtime_rate, $bonus_commission_structure,
+                        $basic_salary, $housing_allowance, $transport_allowance, $telephone_allowance, $other_allowance, $other_allowances, $gross_monthly_salary, $overtime_rate, $bonus_commission_structure,
                         $bank_name, $account_name, $account_number, $bvn,
                         $lirs_tax_id, $tax_identification_number, $pension_fund_administrator, $pension_pin, $nhf_number, $nhis_hmo_provider, $employee_contribution_percentages,
                         $new_hire, $exit_termination_date, $salary_adjustment_notes, $promotion_role_change, $bank_detail_update
@@ -197,9 +201,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $post = $_POST ?? [];
 $post['employee_id'] = $_SESSION['reg_employee_id'] ?? ($post['employee_id'] ?? '');
-$post['salary_allowance_percent_below_150k'] = (string)$salary_allowance_percent_below_150k;
-$post['salary_allowance_percent_150k_up'] = (string)$salary_allowance_percent_150k_up;
-$post['salary_allowance_threshold'] = (string)$salary_allowance_threshold;
+$post['salary_pct_basic'] = (string)($salary_pcts['basic'] ?? 0);
+$post['salary_pct_housing'] = (string)($salary_pcts['housing'] ?? 0);
+$post['salary_pct_transport'] = (string)($salary_pcts['transport'] ?? 0);
+$post['salary_pct_telephone'] = (string)($salary_pcts['telephone'] ?? 0);
+$post['salary_pct_other'] = (string)($salary_pcts['other'] ?? 0);
 $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $default, ENT_QUOTES, 'UTF-8'); };
 ?>
 <!DOCTYPE html>
@@ -304,6 +310,7 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                     <h2 class="step-title">3. Employment Details</h2>
                     <div class="form-group">
                         <label for="employee_id">Employee ID</label>
+                        <input type="hidden" id="generated_employee_id" value="<?= htmlspecialchars($_SESSION['reg_employee_id'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                         <input type="text" id="employee_id" name="employee_id" class="form-control" readonly value="<?= $esc('employee_id') ?>">
                         <small class="form-text">This is automatically generated and cannot be edited.</small>
                     </div>
@@ -360,9 +367,11 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
 
                 <div class="multistep-panel" data-step="4">
                     <h2 class="step-title">4. Salary Structure</h2>
-                    <input type="hidden" id="salary_allowance_percent_below_150k" value="<?= $esc('salary_allowance_percent_below_150k', '0') ?>">
-                    <input type="hidden" id="salary_allowance_percent_150k_up" value="<?= $esc('salary_allowance_percent_150k_up', '0') ?>">
-                    <input type="hidden" id="salary_allowance_threshold" value="<?= $esc('salary_allowance_threshold', '150000') ?>">
+                    <input type="hidden" id="salary_pct_basic" value="<?= $esc('salary_pct_basic', '34') ?>">
+                    <input type="hidden" id="salary_pct_housing" value="<?= $esc('salary_pct_housing', '16') ?>">
+                    <input type="hidden" id="salary_pct_transport" value="<?= $esc('salary_pct_transport', '16') ?>">
+                    <input type="hidden" id="salary_pct_telephone" value="<?= $esc('salary_pct_telephone', '16') ?>">
+                    <input type="hidden" id="salary_pct_other" value="<?= $esc('salary_pct_other', '16') ?>">
                     <div class="form-group">
                         <label for="basic_salary">Basic Salary *</label>
                         <input type="number" id="basic_salary" name="basic_salary" class="form-control" step="0.01" min="0" placeholder="0.00" required value="<?= $esc('basic_salary') ?>">
@@ -374,6 +383,14 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                     <div class="form-group">
                         <label for="transport_allowance">Transport Allowance</label>
                         <input type="number" id="transport_allowance" name="transport_allowance" class="form-control" step="0.01" min="0" readonly value="<?= $esc('transport_allowance') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="telephone_allowance">Telephone Allowance</label>
+                        <input type="number" id="telephone_allowance" name="telephone_allowance" class="form-control" step="0.01" min="0" readonly value="<?= $esc('telephone_allowance') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="other_allowance">Other Allowance</label>
+                        <input type="number" id="other_allowance" name="other_allowance" class="form-control" step="0.01" min="0" readonly value="<?= $esc('other_allowance') ?>">
                     </div>
                     <div class="form-group">
                         <label for="gross_monthly_salary">Gross Monthly Salary</label>
@@ -531,6 +548,12 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
     <script>
     (function() {
         var form = document.getElementById('register-form');
+        // Fallback: if readonly Employee ID is empty in DOM, fill from server-provided value.
+        var employeeIdEl = document.getElementById('employee_id');
+        var generatedEmployeeIdEl = document.getElementById('generated_employee_id');
+        if (employeeIdEl && generatedEmployeeIdEl && !(employeeIdEl.value || '').trim()) {
+            employeeIdEl.value = (generatedEmployeeIdEl.value || '').trim();
+        }
         var panels = form.querySelectorAll('.multistep-panel');
         var dots = form.closest('.multistep-card').querySelectorAll('.step-dot');
 
@@ -586,6 +609,8 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
                     { label: 'Basic Salary', value: getFormValue('basic_salary') },
                     { label: 'Housing Allowance', value: getFormValue('housing_allowance') },
                     { label: 'Transport Allowance', value: getFormValue('transport_allowance') },
+                    { label: 'Telephone Allowance', value: getFormValue('telephone_allowance') },
+                    { label: 'Other Allowance', value: getFormValue('other_allowance') },
                     { label: 'Gross Monthly Salary', value: getFormValue('gross_monthly_salary') }
                 ]},
                 { title: 'Bank Details', fields: [
@@ -675,36 +700,60 @@ $esc = function($key, $default = '') { return htmlspecialchars($post[$key] ?? $d
         if (bvnConfirmEl) bvnConfirmEl.addEventListener('input', syncBvnValidity);
 
         function syncSalaryFields() {
-            var lowEl = document.getElementById('salary_allowance_percent_below_150k');
-            var highEl = document.getElementById('salary_allowance_percent_150k_up');
-            var thEl = document.getElementById('salary_allowance_threshold');
+            var pctBasicEl = document.getElementById('salary_pct_basic');
+            var pctHousingEl = document.getElementById('salary_pct_housing');
+            var pctTransportEl = document.getElementById('salary_pct_transport');
+            var pctTelephoneEl = document.getElementById('salary_pct_telephone');
+            var pctOtherEl = document.getElementById('salary_pct_other');
             var basicEl = form.querySelector('[name="basic_salary"]');
             var houseEl = form.querySelector('[name="housing_allowance"]');
             var transEl = form.querySelector('[name="transport_allowance"]');
+            var telEl = form.querySelector('[name="telephone_allowance"]');
+            var otherEl = form.querySelector('[name="other_allowance"]');
             var grossEl = form.querySelector('[name="gross_monthly_salary"]');
-            if (!basicEl || !houseEl || !transEl || !grossEl) return;
-            var pctLow = lowEl ? parseFloat(lowEl.value || '0') : 0;
-            var pctHigh = highEl ? parseFloat(highEl.value || '0') : 0;
-            var threshold = thEl ? parseFloat(thEl.value || '150000') : 150000;
-            if (!isFinite(pctLow)) pctLow = 0;
-            if (!isFinite(pctHigh)) pctHigh = 0;
-            if (!isFinite(threshold)) threshold = 150000;
-            pctLow = Math.max(0, Math.min(100, pctLow));
-            pctHigh = Math.max(0, Math.min(100, pctHigh));
+            if (!basicEl || !houseEl || !transEl || !telEl || !otherEl || !grossEl) return;
+            var pctBasic = pctBasicEl ? parseFloat(pctBasicEl.value || '0') : 0;
+            var pctHousing = pctHousingEl ? parseFloat(pctHousingEl.value || '0') : 0;
+            var pctTransport = pctTransportEl ? parseFloat(pctTransportEl.value || '0') : 0;
+            var pctTelephone = pctTelephoneEl ? parseFloat(pctTelephoneEl.value || '0') : 0;
+            var pctOther = pctOtherEl ? parseFloat(pctOtherEl.value || '0') : 0;
+            if (!isFinite(pctBasic)) pctBasic = 0;
+            if (!isFinite(pctHousing)) pctHousing = 0;
+            if (!isFinite(pctTransport)) pctTransport = 0;
+            if (!isFinite(pctTelephone)) pctTelephone = 0;
+            if (!isFinite(pctOther)) pctOther = 0;
+            pctBasic = Math.max(0, Math.min(100, pctBasic));
+            pctHousing = Math.max(0, Math.min(100, pctHousing));
+            pctTransport = Math.max(0, Math.min(100, pctTransport));
+            pctTelephone = Math.max(0, Math.min(100, pctTelephone));
+            pctOther = Math.max(0, Math.min(100, pctOther));
             var basic = parseFloat((basicEl.value || '').toString().replace(/,/g, ''));
             if (!isFinite(basic)) {
                 houseEl.value = '';
                 transEl.value = '';
+                telEl.value = '';
+                otherEl.value = '';
                 grossEl.value = '';
                 return;
             }
-            var pct = (basic >= threshold) ? pctHigh : pctLow;
-            var allowance = (basic * (pct / 100));
-            var housing = Math.round(allowance * 100) / 100;
-            var transport = Math.round(allowance * 100) / 100;
-            var gross = Math.round((basic + housing + transport) * 100) / 100;
+            if (!pctBasic) {
+                houseEl.value = '';
+                transEl.value = '';
+                telEl.value = '';
+                otherEl.value = '';
+                grossEl.value = '';
+                return;
+            }
+            var total = basic / (pctBasic / 100);
+            var housing = Math.round((total * (pctHousing / 100)) * 100) / 100;
+            var transport = Math.round((total * (pctTransport / 100)) * 100) / 100;
+            var telephone = Math.round((total * (pctTelephone / 100)) * 100) / 100;
+            var other = Math.round((total * (pctOther / 100)) * 100) / 100;
+            var gross = Math.round(total * 100) / 100;
             houseEl.value = housing.toFixed(2);
             transEl.value = transport.toFixed(2);
+            telEl.value = telephone.toFixed(2);
+            otherEl.value = other.toFixed(2);
             grossEl.value = gross.toFixed(2);
         }
 

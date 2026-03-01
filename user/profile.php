@@ -17,11 +17,7 @@ if (!$staff) {
 
 $edit_enabled = (int) ($staff['profile_edit_enabled'] ?? 1);
 $global_edit_enabled = (get_portal_setting('staff_profile_edit_global_enabled', '1') ?? '1') === '1';
-$salary_allowance_percent_below_150k = (float) (get_portal_setting('salary_allowance_percent_below_150k', '0') ?? '0');
-$salary_allowance_percent_150k_up = (float) (get_portal_setting('salary_allowance_percent_150k_up', '0') ?? '0');
-$salary_allowance_percent_below_150k = max(0, min(100, $salary_allowance_percent_below_150k));
-$salary_allowance_percent_150k_up = max(0, min(100, $salary_allowance_percent_150k_up));
-$salary_allowance_threshold = 150000.0;
+$salary_pcts = get_salary_percent_settings();
 if (!$global_edit_enabled || $edit_enabled !== 1) {
     set_flash('error', 'Profile editing has been disabled by admin. Please contact HR/Admin.');
     header('Location: ' . BASE_URL . '/user/dashboard.php');
@@ -59,12 +55,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Auto-calculate allowances and gross; remove manual inputs for these fields
             $housing_allowance = null;
             $transport_allowance = null;
+            $telephone_allowance = null;
+            $other_allowance = null;
             $gross_monthly_salary = null;
             if ($basic_salary !== null) {
-                $pct = salary_allowance_percent_for_basic((float)$basic_salary);
-                $housing_allowance = number_format(round(((float)$basic_salary) * ($pct / 100), 2), 2, '.', '');
-                $transport_allowance = number_format(round(((float)$basic_salary) * ($pct / 100), 2), 2, '.', '');
-                $gross_monthly_salary = number_format(round(((float)$basic_salary) + (float)$housing_allowance + (float)$transport_allowance, 2), 2, '.', '');
+                $breakdown = compute_salary_breakdown_from_basic((float) $basic_salary);
+                $housing_allowance = $breakdown['housing_allowance'] !== null ? number_format((float)$breakdown['housing_allowance'], 2, '.', '') : null;
+                $transport_allowance = $breakdown['transport_allowance'] !== null ? number_format((float)$breakdown['transport_allowance'], 2, '.', '') : null;
+                $telephone_allowance = $breakdown['telephone_allowance'] !== null ? number_format((float)$breakdown['telephone_allowance'], 2, '.', '') : null;
+                $other_allowance = $breakdown['other_allowance'] !== null ? number_format((float)$breakdown['other_allowance'], 2, '.', '') : null;
+                $gross_monthly_salary = $breakdown['gross_monthly_salary'] !== null ? number_format((float)$breakdown['gross_monthly_salary'], 2, '.', '') : null;
             }
             $other_allowances = null;
             $overtime_rate = null;
@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sql = "UPDATE staff SET
                     full_name = ?, date_of_birth = ?, date_joined = ?, biography = ?, phone_number = ?, gender = ?, address = ?, marital_status = ?,
                     position = ?, department = ?, role = ?, employment_type = ?, reporting_manager = ?, work_location = ?, confirmation_date = ?,
-                    basic_salary = ?, housing_allowance = ?, transport_allowance = ?, other_allowances = ?, gross_monthly_salary = ?, overtime_rate = ?, bonus_commission_structure = ?,
+                    basic_salary = ?, housing_allowance = ?, transport_allowance = ?, telephone_allowance = ?, other_allowance = ?, other_allowances = ?, gross_monthly_salary = ?, overtime_rate = ?, bonus_commission_structure = ?,
                     bank_name = ?, account_name = ?, account_number = ?, bvn = ?,
                     lirs_tax_id = ?, tax_identification_number = ?, pension_fund_administrator = ?, pension_pin = ?, nhf_number = ?, nhis_hmo_provider = ?, employee_contribution_percentages = ?,
                     new_hire = ?, exit_termination_date = ?, salary_adjustment_notes = ?, promotion_role_change = ?, bank_detail_update = ?,
@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([
                     $full_name, $date_of_birth, $date_joined, $biography, $phone_number, $gender, $address, $marital_status,
                     $position, $department, $role, $employment_type, $reporting_manager, $work_location, $confirmation_date,
-                    $basic_salary, $housing_allowance, $transport_allowance, $other_allowances, $gross_monthly_salary, $overtime_rate, $bonus_commission_structure,
+                    $basic_salary, $housing_allowance, $transport_allowance, $telephone_allowance, $other_allowance, $other_allowances, $gross_monthly_salary, $overtime_rate, $bonus_commission_structure,
                     $bank_name, $account_name, $account_number, $bvn,
                     $lirs_tax_id, $tax_identification_number, $pension_fund_administrator, $pension_pin, $nhf_number, $nhis_hmo_provider, $employee_contribution_percentages,
                     $new_hire, $exit_termination_date, $salary_adjustment_notes, $promotion_role_change, $bank_detail_update,
@@ -250,6 +250,8 @@ $flash = get_flash();
                     <dt>Basic salary</dt><dd><?= esc($staff['basic_salary'] ?? '-') ?></dd>
                     <dt>Housing allowance</dt><dd><?= esc($staff['housing_allowance'] ?? '-') ?></dd>
                     <dt>Transport allowance</dt><dd><?= esc($staff['transport_allowance'] ?? '-') ?></dd>
+                    <dt>Telephone allowance</dt><dd><?= esc($staff['telephone_allowance'] ?? '-') ?></dd>
+                    <dt>Other allowance</dt><dd><?= esc($staff['other_allowance'] ?? '-') ?></dd>
                     <dt>Gross monthly salary</dt><dd><?= esc($staff['gross_monthly_salary'] ?? '-') ?></dd>
                 </dl>
             </div>
@@ -472,6 +474,14 @@ $flash = get_flash();
                         <input type="number" step="0.01" min="0" id="transport_allowance" name="transport_allowance" class="form-control" readonly value="<?= esc($staff['transport_allowance'] ?? '') ?>">
                     </div>
                     <div class="form-group">
+                        <label for="telephone_allowance">Telephone allowance</label>
+                        <input type="number" step="0.01" min="0" id="telephone_allowance" name="telephone_allowance" class="form-control" readonly value="<?= esc($staff['telephone_allowance'] ?? '') ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="other_allowance">Other allowance</label>
+                        <input type="number" step="0.01" min="0" id="other_allowance" name="other_allowance" class="form-control" readonly value="<?= esc($staff['other_allowance'] ?? '') ?>">
+                    </div>
+                    <div class="form-group">
                         <label for="gross_monthly_salary">Gross monthly salary</label>
                         <input type="number" step="0.01" min="0" id="gross_monthly_salary" name="gross_monthly_salary" class="form-control" readonly value="<?= esc($staff['gross_monthly_salary'] ?? '') ?>">
                     </div>
@@ -558,33 +568,50 @@ $flash = get_flash();
     <script>
         (function(){
             function syncSalaryFields() {
-                var pctLow = <?= json_encode($salary_allowance_percent_below_150k) ?>;
-                var pctHigh = <?= json_encode($salary_allowance_percent_150k_up) ?>;
-                var threshold = <?= json_encode($salary_allowance_threshold) ?>;
-                if (!isFinite(pctLow)) pctLow = 0;
-                if (!isFinite(pctHigh)) pctHigh = 0;
-                if (!isFinite(threshold)) threshold = 150000;
-                pctLow = Math.max(0, Math.min(100, pctLow));
-                pctHigh = Math.max(0, Math.min(100, pctHigh));
+                var pctBasic = <?= json_encode((float)($salary_pcts['basic'] ?? 34)) ?>;
+                var pctHousing = <?= json_encode((float)($salary_pcts['housing'] ?? 16)) ?>;
+                var pctTransport = <?= json_encode((float)($salary_pcts['transport'] ?? 16)) ?>;
+                var pctTelephone = <?= json_encode((float)($salary_pcts['telephone'] ?? 16)) ?>;
+                var pctOther = <?= json_encode((float)($salary_pcts['other'] ?? 16)) ?>;
+                pctBasic = Math.max(0, Math.min(100, pctBasic));
+                pctHousing = Math.max(0, Math.min(100, pctHousing));
+                pctTransport = Math.max(0, Math.min(100, pctTransport));
+                pctTelephone = Math.max(0, Math.min(100, pctTelephone));
+                pctOther = Math.max(0, Math.min(100, pctOther));
                 var basicEl = document.getElementById('basic_salary');
                 var houseEl = document.getElementById('housing_allowance');
                 var transEl = document.getElementById('transport_allowance');
+                var telEl = document.getElementById('telephone_allowance');
+                var otherEl = document.getElementById('other_allowance');
                 var grossEl = document.getElementById('gross_monthly_salary');
-                if (!basicEl || !houseEl || !transEl || !grossEl) return;
+                if (!basicEl || !houseEl || !transEl || !telEl || !otherEl || !grossEl) return;
                 var basic = parseFloat((basicEl.value || '').toString().replace(/,/g, ''));
                 if (!isFinite(basic)) {
                     houseEl.value = '';
                     transEl.value = '';
+                    telEl.value = '';
+                    otherEl.value = '';
                     grossEl.value = '';
                     return;
                 }
-                var pct = (basic >= threshold) ? pctHigh : pctLow;
-                var allowance = (basic * (pct / 100));
-                var housing = Math.round(allowance * 100) / 100;
-                var transport = Math.round(allowance * 100) / 100;
-                var gross = Math.round((basic + housing + transport) * 100) / 100;
+                if (!pctBasic) {
+                    houseEl.value = '';
+                    transEl.value = '';
+                    telEl.value = '';
+                    otherEl.value = '';
+                    grossEl.value = '';
+                    return;
+                }
+                var total = basic / (pctBasic / 100);
+                var housing = Math.round((total * (pctHousing / 100)) * 100) / 100;
+                var transport = Math.round((total * (pctTransport / 100)) * 100) / 100;
+                var telephone = Math.round((total * (pctTelephone / 100)) * 100) / 100;
+                var other = Math.round((total * (pctOther / 100)) * 100) / 100;
+                var gross = Math.round(total * 100) / 100;
                 houseEl.value = housing.toFixed(2);
                 transEl.value = transport.toFixed(2);
+                telEl.value = telephone.toFixed(2);
+                otherEl.value = other.toFixed(2);
                 grossEl.value = gross.toFixed(2);
             }
             var basicSalaryEl = document.getElementById('basic_salary');

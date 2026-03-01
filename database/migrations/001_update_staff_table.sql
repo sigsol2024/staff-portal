@@ -36,7 +36,9 @@ CALL add_staff_column_if_not_exists('work_location', 'varchar(255) DEFAULT NULL 
 CALL add_staff_column_if_not_exists('basic_salary', 'decimal(12,2) DEFAULT NULL AFTER `work_location`');
 CALL add_staff_column_if_not_exists('housing_allowance', 'decimal(12,2) DEFAULT NULL AFTER `basic_salary`');
 CALL add_staff_column_if_not_exists('transport_allowance', 'decimal(12,2) DEFAULT NULL AFTER `housing_allowance`');
-CALL add_staff_column_if_not_exists('other_allowances', 'text DEFAULT NULL AFTER `transport_allowance`');
+CALL add_staff_column_if_not_exists('telephone_allowance', 'decimal(12,2) DEFAULT NULL AFTER `transport_allowance`');
+CALL add_staff_column_if_not_exists('other_allowance', 'decimal(12,2) DEFAULT NULL AFTER `telephone_allowance`');
+CALL add_staff_column_if_not_exists('other_allowances', 'text DEFAULT NULL AFTER `other_allowance`');
 CALL add_staff_column_if_not_exists('gross_monthly_salary', 'decimal(12,2) DEFAULT NULL AFTER `other_allowances`');
 CALL add_staff_column_if_not_exists('overtime_rate', 'varchar(100) DEFAULT NULL AFTER `gross_monthly_salary`');
 CALL add_staff_column_if_not_exists('bonus_commission_structure', 'text DEFAULT NULL AFTER `overtime_rate`');
@@ -88,11 +90,12 @@ CREATE TABLE IF NOT EXISTS `portal_settings` (
 
 -- Default: allow staff profile editing globally (1 = enabled, 0 = disabled)
 INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('staff_profile_edit_global_enabled', '1');
--- Default: allowance percentage used for auto-calculated salary components
-INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_allowance_percent', '0');
--- Two-tier allowance percentages (below 150k, and 150k+)
-INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_allowance_percent_below_150k', '0');
-INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_allowance_percent_150k_up', '0');
+-- Salary component percentages (portions of Gross Monthly Salary; should sum to 100)
+INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_pct_basic', '34');
+INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_pct_housing', '16');
+INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_pct_transport', '16');
+INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_pct_telephone', '16');
+INSERT IGNORE INTO `portal_settings` (`key`, `value`) VALUES ('salary_pct_other', '16');
 
 -- Enforce unique employee IDs (allows multiple NULLs)
 -- Normalize empty strings to NULL so unique index can be added safely

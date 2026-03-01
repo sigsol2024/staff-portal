@@ -132,6 +132,8 @@ $edit_enabled = (int) ($staff['profile_edit_enabled'] ?? 1);
                     <dt>Basic salary</dt><dd><?= esc($staff['basic_salary'] ?? '-') ?></dd>
                     <dt>Housing allowance</dt><dd><?= esc($staff['housing_allowance'] ?? '-') ?></dd>
                     <dt>Transport allowance</dt><dd><?= esc($staff['transport_allowance'] ?? '-') ?></dd>
+                    <dt>Telephone allowance</dt><dd><?= esc($staff['telephone_allowance'] ?? '-') ?></dd>
+                    <dt>Other allowance</dt><dd><?= esc($staff['other_allowance'] ?? '-') ?></dd>
                     <dt>Gross monthly salary</dt><dd><?= esc($staff['gross_monthly_salary'] ?? '-') ?></dd>
                 </dl>
             </div>

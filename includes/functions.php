@@ -102,18 +102,64 @@ function set_portal_setting(string $key, string $value): bool
 }
 
 /**
- * Salary allowance percent selector (two-tier rule):
- * - Basic salary < 150,000 => uses salary_allowance_percent_below_150k
- * - Basic salary >= 150,000 => uses salary_allowance_percent_150k_up
+ * Salary percentage settings (per component).
+ * Percentages are portions of total gross salary and should sum to ~100.
  */
-function salary_allowance_percent_for_basic(?float $basic_salary): float
+function get_salary_percent_settings(): array
 {
-    if ($basic_salary === null) return 0.0;
-    $threshold = 150000.0;
-    $key = ($basic_salary >= $threshold) ? 'salary_allowance_percent_150k_up' : 'salary_allowance_percent_below_150k';
-    $raw = get_portal_setting($key, '0') ?? '0';
-    $pct = is_numeric($raw) ? (float) $raw : 0.0;
-    if ($pct < 0) $pct = 0.0;
-    if ($pct > 100) $pct = 100.0;
-    return $pct;
+    $defaults = [
+        'basic' => 34.0,
+        'housing' => 16.0,
+        'transport' => 16.0,
+        'telephone' => 16.0,
+        'other' => 16.0,
+    ];
+
+    $out = [];
+    foreach ($defaults as $key => $def) {
+        $raw = get_portal_setting('salary_pct_' . $key, (string) $def);
+        $pct = is_numeric($raw) ? (float) $raw : (float) $def;
+        $pct = max(0.0, min(100.0, $pct));
+        $out[$key] = $pct;
+    }
+
+    return $out;
+}
+
+/**
+ * Compute salary breakdown from Basic Salary using configured percentages.
+ * If basic% is 0, returns empty values.
+ */
+function compute_salary_breakdown_from_basic(?float $basic_salary): array
+{
+    $p = get_salary_percent_settings();
+    $basic_pct = (float) ($p['basic'] ?? 0.0);
+    if ($basic_salary === null || $basic_salary < 0 || $basic_pct <= 0) {
+        return [
+            'basic_salary' => null,
+            'housing_allowance' => null,
+            'transport_allowance' => null,
+            'telephone_allowance' => null,
+            'other_allowance' => null,
+            'gross_monthly_salary' => null,
+        ];
+    }
+
+    $total = (float) $basic_salary / ($basic_pct / 100.0);
+    $round2 = function(float $v): float { return round($v, 2); };
+
+    $housing = $round2($total * ((float) ($p['housing'] ?? 0.0) / 100.0));
+    $transport = $round2($total * ((float) ($p['transport'] ?? 0.0) / 100.0));
+    $telephone = $round2($total * ((float) ($p['telephone'] ?? 0.0) / 100.0));
+    $other = $round2($total * ((float) ($p['other'] ?? 0.0) / 100.0));
+    $gross = $round2($total);
+
+    return [
+        'basic_salary' => $round2((float) $basic_salary),
+        'housing_allowance' => $housing,
+        'transport_allowance' => $transport,
+        'telephone_allowance' => $telephone,
+        'other_allowance' => $other,
+        'gross_monthly_salary' => $gross,
+    ];
 }

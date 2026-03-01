@@ -115,6 +115,8 @@ CREATE TABLE `staff` (
   `basic_salary` decimal(12,2) DEFAULT NULL,
   `housing_allowance` decimal(12,2) DEFAULT NULL,
   `transport_allowance` decimal(12,2) DEFAULT NULL,
+  `telephone_allowance` decimal(12,2) DEFAULT NULL,
+  `other_allowance` decimal(12,2) DEFAULT NULL,
   `other_allowances` text DEFAULT NULL,
   `gross_monthly_salary` decimal(12,2) DEFAULT NULL,
   `overtime_rate` varchar(100) DEFAULT NULL,
@@ -169,9 +171,11 @@ CREATE TABLE `portal_settings` (
 
 INSERT INTO `portal_settings` (`key`, `value`) VALUES
 ('staff_profile_edit_global_enabled', '1'),
-('salary_allowance_percent', '0'),
-('salary_allowance_percent_below_150k', '0'),
-('salary_allowance_percent_150k_up', '0');
+('salary_pct_basic', '34'),
+('salary_pct_housing', '16'),
+('salary_pct_transport', '16'),
+('salary_pct_telephone', '16'),
+('salary_pct_other', '16');
 
 --
 -- Dumping data for table `staff`
